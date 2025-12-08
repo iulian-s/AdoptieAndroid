@@ -4,15 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -26,7 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.example.adoptie.anunt.ExploreazaScreen
 import com.example.adoptie.ui.theme.AdoptieTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,9 +40,15 @@ class MainActivity : ComponentActivity() {
             AdoptieTheme {
                 val items = listOf(
                     NavigationItem(
-                        "Acasa",
+                        "Exploreaza",
                         Icons.Filled.Home,
                         Icons.Outlined.Home,
+                        hasNews = false
+                    ),
+                    NavigationItem(
+                        "Adauga",
+                        Icons.Filled.AddCircle,
+                        Icons.Outlined.AddCircle,
                         hasNews = false
                     ),
                     NavigationItem(
@@ -49,10 +58,11 @@ class MainActivity : ComponentActivity() {
                         hasNews = false,
                         badgeCount = 12
                     ),
+
                     NavigationItem(
                         "Setari",
-                        Icons.Filled.Settings,
-                        Icons.Outlined.Settings,
+                        Icons.Filled.Person,
+                        Icons.Outlined.Person,
                         hasNews = true
                     )
                 )
@@ -99,25 +109,24 @@ class MainActivity : ComponentActivity() {
                     },
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
+                    ScreenContent(
+                        selectedItemIndex = selectedItemIndex,
+                        modifier = Modifier.padding(innerPadding)
+                    )
 
                 }
             }
         }
     }
 }
-
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AdoptieTheme {
-        Greeting("Android")
+fun ScreenContent(selectedItemIndex: Int, modifier: Modifier = Modifier){
+    Box(modifier.fillMaxSize()){
+        when(selectedItemIndex){
+            0 -> ExploreazaScreen()
+            1 -> AdaugaScreen()
+            2 -> ChatScreen()
+            3 -> SetariScreen()
+        }
     }
 }
