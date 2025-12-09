@@ -14,10 +14,13 @@ data class AnuntDTO(
     val rasa: String,
     val gen: Gen,
     val varsta: Varsta,
+    val varstaMin: Int? = null,
+    val varstaMax: Int? = null,
     val listaImagini: List<String>,
     val locatieId: Long,
     var stare: Stare = Stare.NEVERIFICAT,
     val utilizatorId: Long = 0,
+    val updatedAt: String = ""
 )
 
 enum class Varsta(val display: String, val minLuni: Int?, val maxLuni: Int?) {
