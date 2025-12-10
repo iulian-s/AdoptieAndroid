@@ -1,5 +1,7 @@
 package com.example.adoptie.anunt
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,32 +10,41 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.adoptie.BASE_URL
 import com.example.adoptie.localitate.LocalitateDTO
 import com.example.adoptie.utilizator.UtilizatorDTO
+import com.example.adoptie.utilizator.initiatePhoneCall
 
 @Composable
-fun UtilizatorCard(user: UtilizatorDTO, localitate: LocalitateDTO) {
+fun UtilizatorCard(user: UtilizatorDTO, localitate: LocalitateDTO, onCardClick: () -> Unit) {
     val defaultAvatarPath = "/imagini/avatar.png"
     val avatarPath = user.avatar ?: defaultAvatarPath
     val avatarUrl = BASE_URL + avatarPath
+    val context = LocalContext.current
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 16.dp),
-        onClick = { /* TODO: Navigare la profilul utilizatorului */ },
+        onClick = onCardClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
     ){
         Row(
@@ -55,10 +66,30 @@ fun UtilizatorCard(user: UtilizatorDTO, localitate: LocalitateDTO) {
                     style = MaterialTheme.typography.titleMedium
                 )
                 if (user.telefon.isNotEmpty()) {
-                    Text(
-                        text = "Telefon: ${user.telefon}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Row(
+                        modifier = Modifier
+                            .clickable{
+                                initiatePhoneCall(context, user.telefon)
+                            }
+                            .padding(vertical = 4.dp)
+                            ,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Phone,
+                            contentDescription = "Apel",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = user.telefon,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
                 }
                 Text(
                     text = "${localitate.nume}, ${localitate.judet}",

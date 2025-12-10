@@ -26,10 +26,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
 import com.example.adoptie.anunt.ExploreazaScreen
+import com.example.adoptie.anunt.resetAnunturiStack
 import com.example.adoptie.ui.theme.AdoptieTheme
 
 class MainActivity : ComponentActivity() {
@@ -69,6 +72,11 @@ class MainActivity : ComponentActivity() {
                 var selectedItemIndex by rememberSaveable{
                     mutableStateOf(0)
                 }
+
+                var anunturiNavController: NavHostController? by remember {
+                    mutableStateOf(null)
+                }
+
                 Scaffold(
                     bottomBar = {
                         NavigationBar{
@@ -76,8 +84,12 @@ class MainActivity : ComponentActivity() {
                                 NavigationBarItem(
                                     selected = selectedItemIndex == index,
                                     onClick = {
+                                        if(index == 0 && selectedItemIndex == 0){
+                                            anunturiNavController?.let{
+                                                resetAnunturiStack(it)
+                                            }
+                                        }
                                         selectedItemIndex = index
-                                        //navController.navigate(item.title)
                                     },
                                     label = {
                                          Text(item.title)
@@ -109,24 +121,22 @@ class MainActivity : ComponentActivity() {
                     },
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
-                    ScreenContent(
-                        selectedItemIndex = selectedItemIndex,
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    Box(Modifier.padding(innerPadding).fillMaxSize()) {
+                        when (selectedItemIndex) {
+                            0 -> ExploreazaScreen(
+                                onNavControllerReady = { controller ->
+                                    anunturiNavController = controller
+                                }
+                            )
+                            1 -> AdaugaScreen()
+                            2 -> ChatScreen()
+                            3 -> SetariScreen()
+                        }
+                    }
 
                 }
             }
         }
     }
 }
-@Composable
-fun ScreenContent(selectedItemIndex: Int, modifier: Modifier = Modifier){
-    Box(modifier.fillMaxSize()){
-        when(selectedItemIndex){
-            0 -> ExploreazaScreen()
-            1 -> AdaugaScreen()
-            2 -> ChatScreen()
-            3 -> SetariScreen()
-        }
-    }
-}
+

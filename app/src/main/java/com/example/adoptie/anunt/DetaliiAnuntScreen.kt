@@ -34,7 +34,7 @@ import com.example.adoptie.utilizator.UtilizatorDTO
 
 
 @Composable
-fun DetaliiAnuntScreen(anuntId: Long) {
+fun DetaliiAnuntScreen(anuntId: Long, onNavigateToProfile: (Long) -> Unit) {
     var detaliiState by remember { mutableStateOf<DetaliiState>(DetaliiState.Loading) }
     LaunchedEffect(anuntId) {
         detaliiState = try {
@@ -49,9 +49,6 @@ fun DetaliiAnuntScreen(anuntId: Long) {
     }
 
     Scaffold(
-//        topBar = {
-//            TopAppBar(title = { Text("Detalii Anunț") })
-//        }
     ) { innerPadding ->
             when(val state = detaliiState){
                 is DetaliiState.Loading -> Box(Modifier
@@ -65,6 +62,7 @@ fun DetaliiAnuntScreen(anuntId: Long) {
                         anunt = state.details.anunt,
                         user = state.details.user,
                         localitate = state.details.localitate,
+                        onNavigateToProfile = onNavigateToProfile,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -73,7 +71,7 @@ fun DetaliiAnuntScreen(anuntId: Long) {
 }
 
 @Composable
-fun DetaliiContent(anunt: AnuntDTO, user: UtilizatorDTO, localitate: LocalitateDTO, modifier: Modifier = Modifier) {
+fun DetaliiContent(anunt: AnuntDTO, user: UtilizatorDTO, localitate: LocalitateDTO, onNavigateToProfile: (Long) -> Unit,  modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)
     ) {
@@ -97,7 +95,11 @@ fun DetaliiContent(anunt: AnuntDTO, user: UtilizatorDTO, localitate: LocalitateD
             Spacer(Modifier.height(16.dp))
         }
         item{
-            UtilizatorCard(user = user, localitate = localitate)
+            UtilizatorCard(
+                user = user,
+                localitate = localitate,
+                onCardClick = {onNavigateToProfile(user.id)}
+                )
         }
 
     }
