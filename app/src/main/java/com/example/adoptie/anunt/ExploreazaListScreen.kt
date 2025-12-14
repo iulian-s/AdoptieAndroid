@@ -4,19 +4,26 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
@@ -35,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import com.example.adoptie.RetrofitClient
+import java.util.Locale
 
 @Composable
 fun ExploreazaListScreen(
@@ -47,6 +55,16 @@ fun ExploreazaListScreen(
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
+    //Stare sortare
+    var currentSortOption by rememberSaveable { mutableStateOf(SortOption.RECENT) }
+
+    // Stările specifice filtrelor
+    var showFilterSheet by rememberSaveable { mutableStateOf(false) }
+    var selectedSpecie by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedRasa by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedVarsta by rememberSaveable { mutableStateOf<Varsta?>(null) }
+    var raseMap by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
+
     LaunchedEffect(Unit) {
         val apiService = RetrofitClient.anuntService
 
@@ -57,9 +75,17 @@ fun ExploreazaListScreen(
         } catch (e: Exception){
             AnunturiState.Error("Eroare la incarcarea anunturilor: ${e.message}")
         }
+
+        try {
+            raseMap = RetrofitClient.animaluteService.getRase()
+        } catch (e: Exception) {
+            // Opțional: arată o eroare dacă nu se pot încărca filtrele
+            println("Eroare la încărcarea raselor: ${e.message}")
+        }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
+
 
         OutlinedTextField(
             value = searchQuery,
@@ -80,6 +106,28 @@ fun ExploreazaListScreen(
 
         )
 
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            OutlinedButton(onClick = { showFilterSheet = true }) {
+                Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Filtre")
+                Spacer(Modifier.width(4.dp))
+                // Afișăm dacă există filtre active
+                Text("Filtre")
+            }
+
+            // Meniu Dropdown pentru Sortare
+            SortMenu(
+                currentSortOption = currentSortOption,
+                onSortChange = { currentSortOption = it }
+            )
+        }
+
+
         when(val state = anunturiState){
             is AnunturiState.Loading -> {
                 Box(
@@ -98,18 +146,46 @@ fun ExploreazaListScreen(
                 }
             }
             is AnunturiState.Success -> {
-                val anunturiFiltrate = remember(state.anunturi, searchQuery) {
-                    if(searchQuery.isBlank()){
-                        state.anunturi
-                    } else {
-                        val query = searchQuery.lowercase()
-                        state.anunturi.filter{ anunt ->
-                            anunt.titlu.lowercase().contains(query) ||
-                                    anunt.descriere.lowercase().contains(query)
+
+                val filteredAndSortedAnunturi = remember(
+                    state.anunturi, searchQuery, currentSortOption,
+                    selectedSpecie, selectedRasa, selectedVarsta // Adăugăm toți parametrii de filtrare aici
+                ) {
+                    var list = state.anunturi.toList()
+
+                    // A) Filtrare după căutare (Titlu/Descriere)
+                    if (searchQuery.isNotBlank()) {
+                        val query = searchQuery.lowercase(Locale.getDefault())
+                        list = list.filter { anunt ->
+                            anunt.titlu.lowercase(Locale.getDefault()).contains(query) ||
+                                    anunt.descriere.lowercase(Locale.getDefault()).contains(query)
                         }
                     }
+
+                    // B) Filtrare după Specie
+                    if (selectedSpecie != null) {
+                        list = list.filter { it.specie == selectedSpecie }
+                    }
+
+                    // C) Filtrare după Rasă
+                    if (selectedRasa != null) {
+                        list = list.filter { it.rasa == selectedRasa }
+                    }
+
+                    //filtrare dupa varsta
+                    if(selectedVarsta != null) {
+                        list = list.filter { it.varsta == selectedVarsta }
+                    }
+
+                    // D) Sortare
+                    when (currentSortOption) {
+                        SortOption.RECENT -> list.sortedByDescending { it.updatedAt }
+                        SortOption.TITLE_ASC -> list.sortedBy { it.titlu }
+                        SortOption.TITLE_DESC -> list.sortedByDescending { it.titlu }
+                    }
                 }
-                if(anunturiFiltrate.isEmpty() && searchQuery.isNotEmpty()){
+
+                if(filteredAndSortedAnunturi.isEmpty() && searchQuery.isNotEmpty()){
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -117,7 +193,7 @@ fun ExploreazaListScreen(
                         Text("Nu s-au gasit anunturi!")
                     }
                 }
-                else if (anunturiFiltrate.isEmpty()){
+                else if (filteredAndSortedAnunturi.isEmpty()){
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -130,7 +206,7 @@ fun ExploreazaListScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(24.dp)
                     ){
-                        items(anunturiFiltrate) { anunt ->
+                        items(filteredAndSortedAnunturi) { anunt ->
                             AnuntCard(
                                 anunt = anunt,
                                 onCardClick = {
@@ -140,6 +216,21 @@ fun ExploreazaListScreen(
 
                         }
                     }
+                }
+                if (showFilterSheet) {
+                    FilterBottomSheet(
+                        selectedSpecie = selectedSpecie,
+                        selectedRasa = selectedRasa,
+                        selectedVarsta = selectedVarsta,
+                        raseMap = raseMap,
+                        onDismiss = { showFilterSheet = false },
+                        onApplyFilters = { specie, rasa, varsta ->
+                            selectedSpecie = specie
+                            selectedRasa = rasa
+                            selectedVarsta = varsta
+                            showFilterSheet = false
+                        }
+                    )
                 }
             }
         }

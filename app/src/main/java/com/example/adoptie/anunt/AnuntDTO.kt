@@ -31,4 +31,8 @@ enum class Varsta(val display: String, val minLuni: Int?, val maxLuni: Int?) {
     TREI_CINCI_ANI("3-5 ani", 36, 60),
     CINCI_PLUS_ANI("5+ ani", 60, null),
     NECUNOSCUT("Necunoscut", null, null);
+
+    companion object {
+        fun getAll() = entries
+    }
 }

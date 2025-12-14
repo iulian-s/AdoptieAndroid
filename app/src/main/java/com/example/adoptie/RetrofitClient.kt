@@ -1,5 +1,6 @@
 package com.example.adoptie
 
+import com.example.adoptie.anunt.AnimaluteApiService
 import com.example.adoptie.anunt.AnunturiApiService
 import com.example.adoptie.localitate.LocalitateApiService
 import com.example.adoptie.utilizator.UtilizatorApiService
@@ -33,5 +34,9 @@ object RetrofitClient {
 
     val localitateService: LocalitateApiService by lazy {
         retrofit.create(LocalitateApiService::class.java)
+    }
+
+    val animaluteService: AnimaluteApiService by lazy {
+        retrofit.create(AnimaluteApiService::class.java)
     }
 }
