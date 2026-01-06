@@ -10,18 +10,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -32,6 +35,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -42,6 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import com.example.adoptie.RetrofitClient
+import com.example.adoptie.localitate.LocalitateDTO
 import java.util.Locale
 
 @Composable
@@ -64,23 +69,70 @@ fun ExploreazaListScreen(
     var selectedRasa by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedVarsta by rememberSaveable { mutableStateOf<Varsta?>(null) }
     var raseMap by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
+    var selectedLocalitate by rememberSaveable { mutableStateOf<LocalitateDTO?>(null) }
+    var selectedJudet by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedRaza by rememberSaveable { mutableDoubleStateOf(50.0) }
+    var allLocalitati by remember { mutableStateOf<List<LocalitateDTO>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         val apiService = RetrofitClient.anuntService
-
+        anunturiState = AnunturiState.Loading
         anunturiState = try {
-            //  Aici are loc apelul  localhost:8080/api/anunturi/active
-            val results = apiService.getAnunturiActive()
-            AnunturiState.Success(results)
+            if (selectedLocalitate != null){
+                val results = apiService.getAnunturiInRaza(
+                    selectedLocalitate!!.id,
+                    selectedRaza
+                )
+                AnunturiState.Success(results)
+            }
+            else{
+                val all = apiService.getAnunturiActive()
+                AnunturiState.Success(all)
+            }
+
         } catch (e: Exception){
             AnunturiState.Error("Eroare la incarcarea anunturilor: ${e.message}")
         }
 
         try {
             raseMap = RetrofitClient.animaluteService.getRase()
+
         } catch (e: Exception) {
             // Opțional: arată o eroare dacă nu se pot încărca filtrele
             println("Eroare la încărcarea raselor: ${e.message}")
+        }
+
+        try {
+            allLocalitati = RetrofitClient.localitateService.getAllLocalitati()
+        } catch (e: Exception) {
+            println("Eroare localități: ${e.message}")
+        }
+    }
+
+    LaunchedEffect(selectedLocalitate,selectedJudet, selectedRaza) {
+        anunturiState = AnunturiState.Loading
+        try {
+            val results = when {
+                // Scenariul 1: Avem localitate selectată -> Căutare pe rază
+                selectedLocalitate != null -> {
+                    RetrofitClient.anuntService.getAnunturiInRaza(
+                        localitateId = selectedLocalitate!!.id,
+                        razaKm = selectedRaza
+                    )
+                }
+                // Scenariul 2: Avem doar județul selectat -> Filtrare pe județ
+                selectedJudet != null -> {
+                    // Va trebui să adaugi acest endpoint în AnunturiApiService
+                    RetrofitClient.anuntService.getAnunturiByJudet(selectedJudet!!)
+                }
+                // Scenariul 3: Nimic selectat -> Toate anunțurile
+                else -> {
+                    RetrofitClient.anuntService.getAnunturiActive()
+                }
+            }
+            anunturiState = AnunturiState.Success(results)
+        } catch (e: Exception) {
+            anunturiState = AnunturiState.Error("Eroare: ${e.message}")
         }
     }
 
@@ -105,6 +157,7 @@ fun ExploreazaListScreen(
                 .padding(horizontal = 24.dp, vertical = 8.dp)
 
         )
+
 
         Row(
             modifier = Modifier
@@ -223,13 +276,20 @@ fun ExploreazaListScreen(
                         selectedRasa = selectedRasa,
                         selectedVarsta = selectedVarsta,
                         raseMap = raseMap,
+                        localitati = allLocalitati,
+                        selectedLocalitate = selectedLocalitate,
+                        selectedRaza = selectedRaza,
                         onDismiss = { showFilterSheet = false },
-                        onApplyFilters = { specie, rasa, varsta ->
+                        onApplyFilters = { specie, rasa, varsta, judet, localitate, raza ->
                             selectedSpecie = specie
                             selectedRasa = rasa
                             selectedVarsta = varsta
+                            selectedJudet = judet
+                            selectedLocalitate = localitate
+                            selectedRaza = raza
                             showFilterSheet = false
-                        }
+                        },
+
                     )
                 }
             }
