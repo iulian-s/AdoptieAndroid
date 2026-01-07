@@ -38,6 +38,7 @@ import com.example.adoptie.ui.theme.AdoptieTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RetrofitClient.init(applicationContext)
         enableEdgeToEdge()
         setContent {
             AdoptieTheme {
@@ -63,7 +64,7 @@ class MainActivity : ComponentActivity() {
                     ),
 
                     NavigationItem(
-                        "Setari",
+                        "Profil",
                         Icons.Filled.Person,
                         Icons.Outlined.Person,
                         hasNews = true

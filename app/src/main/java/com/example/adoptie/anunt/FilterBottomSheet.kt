@@ -350,40 +350,40 @@ fun FilterBottomSheet(
                 Spacer(Modifier.height(32.dp))
 
 
-                // Buton Aplica
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Buton Șterge Filtre (Resetare completă)
-                    TextButton(onClick = {
-                        onApplyFilters(
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            50.0
-                        ); onDismiss()
-                    }) {
-                        Text("Șterge Filtrele")
-                    }
+            }
+            // Buton Aplica
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Buton Șterge Filtre (Resetare completă)
+                TextButton(onClick = {
+                    onApplyFilters(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        50.0
+                    ); onDismiss()
+                }) {
+                    Text("Șterge Filtrele")
+                }
 
-                    Button(
-                        onClick = {
-                            onApplyFilters(
-                                tempSpecie,
-                                tempRasa,
-                                tempVarsta,
-                                tempJudetSelected,
-                                tempLocalitate,
-                                tempRaza
-                            )
-                            onDismiss()
-                        }
-                    ) {
-                        Text("Aplică")
+                Button(
+                    onClick = {
+                        onApplyFilters(
+                            tempSpecie,
+                            tempRasa,
+                            tempVarsta,
+                            tempJudetSelected,
+                            tempLocalitate,
+                            tempRaza
+                        )
+                        onDismiss()
                     }
+                ) {
+                    Text("Aplică")
                 }
             }
         }
