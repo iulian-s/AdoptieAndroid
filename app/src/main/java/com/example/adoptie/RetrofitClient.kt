@@ -66,4 +66,6 @@ object RetrofitClient {
     val authService: AuthApiService by lazy {
         retrofit.create(AuthApiService::class.java)
     }
+
+
 }

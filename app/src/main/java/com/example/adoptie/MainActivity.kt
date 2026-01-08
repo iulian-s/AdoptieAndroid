@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import com.example.adoptie.anunt.AnunturiRoutes
 import com.example.adoptie.anunt.ExploreazaScreen
 import com.example.adoptie.anunt.resetAnunturiStack
 import com.example.adoptie.ui.theme.AdoptieTheme
@@ -70,49 +71,58 @@ class MainActivity : ComponentActivity() {
                         hasNews = true
                     )
                 )
-                var selectedItemIndex by rememberSaveable{
+                var selectedItemIndex by rememberSaveable {
                     mutableStateOf(0)
                 }
 
                 var anunturiNavController: NavHostController? by remember {
                     mutableStateOf(null)
                 }
+                var profileNavController: NavHostController? by remember {
+                    mutableStateOf(null)
+                }
 
                 Scaffold(
                     bottomBar = {
-                        NavigationBar{
+                        NavigationBar {
                             items.forEachIndexed { index, item ->
                                 NavigationBarItem(
                                     selected = selectedItemIndex == index,
                                     onClick = {
-                                        if(index == 0 && selectedItemIndex == 0){
-                                            anunturiNavController?.let{
+                                        if (index == 0 && selectedItemIndex == 0) {
+                                            anunturiNavController?.let {
                                                 resetAnunturiStack(it)
+                                            }
+                                        }
+                                        if (index == 3 && selectedItemIndex == 3) {
+                                            profileNavController?.let {
+                                                resetProfileStack(it)
                                             }
                                         }
                                         selectedItemIndex = index
                                     },
                                     label = {
-                                         Text(item.title)
+                                        Text(item.title)
                                     },
                                     icon = {
                                         BadgedBox(badge = {
-                                            if(item.badgeCount != null){
-                                                Badge{
+                                            if (item.badgeCount != null) {
+                                                Badge {
                                                     Text(item.badgeCount.toString())
                                                 }
-                                            }
-                                            else if(item.hasNews){
+                                            } else if (item.hasNews) {
                                                 Badge()
                                             }
 
                                         }) {
-                                            Icon(imageVector = if(index == selectedItemIndex){
-                                                item.selectedIcon
-                                            } else {
-                                                item.selectedIcon
-                                                   },
-                                                item.title)
+                                            Icon(
+                                                imageVector = if (index == selectedItemIndex) {
+                                                    item.selectedIcon
+                                                } else {
+                                                    item.selectedIcon
+                                                },
+                                                item.title
+                                            )
                                         }
 
                                     }
@@ -129,15 +139,25 @@ class MainActivity : ComponentActivity() {
                                     anunturiNavController = controller
                                 }
                             )
+
                             1 -> AdaugaScreen()
                             2 -> ChatScreen()
-                            3 -> SetariScreen()
+                            3 -> SetariScreen(
+                                onNavigateToGlobalDetail = { id ->
+                                    println("Navigat la anuntul: $id")
+                                    anunturiNavController?.navigate(AnunturiRoutes.detailsRoute(id))
+                                },
+                                onProfileNavControllerReady = {
+                                    profileNavController = it
+                                }
+                            )
                         }
-                    }
 
+                    }
                 }
             }
         }
     }
 }
+
 

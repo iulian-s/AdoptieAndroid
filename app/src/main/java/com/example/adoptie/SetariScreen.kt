@@ -1,77 +1,122 @@
 package com.example.adoptie
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import coil.compose.AsyncImage
+import com.example.adoptie.anunt.AnuntDTO
+import com.example.adoptie.anunt.AnunturiRoutes
+import com.example.adoptie.anunt.DetaliiContent
+import com.example.adoptie.anunt.Gen
+import com.example.adoptie.anunt.ImageCarousel
+import com.example.adoptie.anunt.Stare
+import com.example.adoptie.anunt.Varsta
 import com.example.adoptie.auth.AuthApiService
 import com.example.adoptie.auth.TokenManager
+import com.example.adoptie.localitate.LocalitateDTO
+import com.example.adoptie.utilizator.ProfilulMeuScreen
 import kotlinx.coroutines.launch
+import kotlin.text.lowercase
 
 sealed class SetariRoutes(val route: String){
     object Main : SetariRoutes("setari_main")
     object Login : SetariRoutes("login")
     object Register : SetariRoutes("register")
+    object ProfilulMeu : SetariRoutes("profilul_meu")
+    object AnunturileMele : SetariRoutes("anunturile_mele")
+
+    object DetaliiAnuntPropriu : SetariRoutes("detalii_anunt_propriu/{anuntId}") {
+        fun createRoute(id: Long) = "detalii_anunt_propriu/$id"
+    }
 }
 @Composable
-fun SetariScreen() {
+fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
+                 onProfileNavControllerReady: (NavHostController) -> Unit) {
     val setariNavController = rememberNavController()
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
     // Stare pentru a verifica dacă utilizatorul este logat
     var isLoggedIn by remember {
         mutableStateOf(tokenManager.getToken() != null)
+    }
+
+    LaunchedEffect(Unit) {
+        onProfileNavControllerReady(setariNavController)
     }
 
     NavHost(
@@ -86,7 +131,9 @@ fun SetariScreen() {
                 onLogout = {
                     tokenManager.deleteToken()
                     isLoggedIn = false // Actualizăm starea pentru a schimba UI-ul instant
-                }
+                },
+                onNavigateToProfil = { setariNavController.navigate(SetariRoutes.ProfilulMeu.route) },
+                onNavigateToAnunturi = { setariNavController.navigate(SetariRoutes.AnunturileMele.route) },
             )
         }
 
@@ -118,6 +165,33 @@ fun SetariScreen() {
                 }
             )
         }
+
+        composable(SetariRoutes.ProfilulMeu.route) {
+            ProfilulMeuScreen(onBack = { setariNavController.popBackStack() })
+        }
+
+
+
+        composable(SetariRoutes.AnunturileMele.route) {
+            AnunturileMeleScreen(
+                onBack = { setariNavController.popBackStack() },
+                onNavigateToDetail = { id ->
+                    setariNavController.navigate(SetariRoutes.DetaliiAnuntPropriu.createRoute(id))
+                }
+            )
+        }
+
+        composable(
+            route = SetariRoutes.DetaliiAnuntPropriu.route,
+            arguments = listOf(navArgument("anuntId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getLong("anuntId") ?: 0L
+            // Aici chemăm noul ecran pe care îl vom crea
+            AnuntPropriuDetaliiScreen(
+                anuntId = id,
+                onBack = { setariNavController.popBackStack() }
+            )
+        }
     }
 
 }
@@ -126,7 +200,10 @@ fun SetariScreen() {
 fun SetariMainContent(
     isLoggedIn: Boolean,
     onNavigateToLogin: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToProfil: () -> Unit,
+    onNavigateToAnunturi: () -> Unit,
+
 ) {
     Column(
         modifier = Modifier
@@ -145,11 +222,26 @@ fun SetariMainContent(
             // UI pentru utilizator LOGAT
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                onClick = onNavigateToProfil
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Contul tău", style = MaterialTheme.typography.titleMedium)
-                    Text("Ești conectat în aplicație.", style = MaterialTheme.typography.bodyMedium)
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Person, contentDescription = null)
+                    Spacer(Modifier.width(16.dp))
+                    Text("Profilul meu", style = MaterialTheme.typography.titleMedium)
+                }
+            }
+
+            Card(
+                onClick = onNavigateToAnunturi,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.List, contentDescription = null)
+                    Spacer(Modifier.width(16.dp))
+                    Text("Anunțurile mele", style = MaterialTheme.typography.titleMedium)
                 }
             }
 
@@ -191,7 +283,9 @@ fun LoginScreen(onNavigateToRegister: () -> Unit, onBack: () -> Unit, navControl
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(24.dp)) {
         IconButton(onClick = onBack) {
             Icon(Icons.Default.ArrowBack, contentDescription = "Înapoi")
         }
@@ -266,7 +360,9 @@ fun LoginScreen(onNavigateToRegister: () -> Unit, onBack: () -> Unit, navControl
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp)
         ) {
             Text("Conectare")
         }
@@ -463,4 +559,501 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AnunturileMeleScreen(
+    onBack: () -> Unit,
+    onNavigateToDetail: (id: Long) -> Unit
+) {
+    var anunturi by remember { mutableStateOf<List<AnuntDTO>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClient.utilizatorService.getAnunturiProprii()
+            if (response.isSuccessful) {
+                anunturi = response.body() ?: emptyList()
+            }
+        } catch (e: Exception) { e.printStackTrace() }
+        isLoading = false
+    }
+
+    Scaffold() { padding ->
+        if (isLoading) {
+            // Indicator încărcare
+        } else if (anunturi.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Nu ai postat niciun anunț încă.")
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.align(Alignment.TopStart)
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                }
+
+                Text(
+                    text = "Anunturile mele",
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+
+            LazyColumn(modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()) {
+                items(anunturi) { anunt ->
+                    AnuntPropriuItem(
+                        anunt,
+                        onDetailClick = { id ->
+                            println("Click pe anunțul: $id")
+                            onNavigateToDetail(id) }
+                    ) // Un card mai mic care poate include buton de Șterge/Editează
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AnuntPropriuItem(
+    anunt: AnuntDTO,
+    onDetailClick: (Long) -> Unit
+) {
+    val imageUrl = if(anunt.listaImagini.isNotEmpty()){
+        BASE_URL + anunt.listaImagini.first()
+    }
+    else{
+        null
+    }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onDetailClick(anunt.id) },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 🖼️ Imagine Mică (Thumbnail)
+            Surface(
+                modifier = Modifier.size(70.dp),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                if (anunt.listaImagini.isNotEmpty()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(Icons.Default.Refresh, null, modifier = Modifier.padding(16.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // 📝 Detalii Text
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = anunt.titlu,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = "${anunt.specie} • ${anunt.rasa}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Tag pentru Status (Activ/Inactiv)
+                val statusColor = if (anunt.stare == Stare.ACTIV) Color(0xFF4CAF50) else Color.Gray
+                val statusText = if (anunt.stare == Stare.ACTIV) "Activ" else "Inactiv"
+
+                Surface(
+                    color = statusColor.copy(alpha = 0.1f),
+                    shape = MaterialTheme.shapes.extraSmall
+                ) {
+                    Text(
+                        text = statusText,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor
+                    )
+                }
+            }
+
+
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
+    var anunt by remember { mutableStateOf<AnuntDTO?>(null) }
+    var isEditing by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    var raseMap by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
+    var expandedSpecie by remember { mutableStateOf(false) }
+    var expandedRasa by remember { mutableStateOf(false) }
+    var expandedGen by remember { mutableStateOf(false) }
+    var expandedVarsta by remember { mutableStateOf(false) }
+    var expandedStare by remember {mutableStateOf(false)}
+    var expandedJudet by remember { mutableStateOf(false) }
+    var expandedLocalitate by remember { mutableStateOf(false) }
+
+    var editTitlu by remember { mutableStateOf("") }
+    var editDescriere by remember { mutableStateOf("") }
+    var editSpecie by remember { mutableStateOf("") }
+    var editRasa by remember { mutableStateOf("") }
+    var editGen by remember { mutableStateOf<Gen?>(null) }
+    var editVarsta by remember { mutableStateOf<Varsta?>(null) }
+    var editStare by remember { mutableStateOf<Stare?>(null) }
+    var editJudet by remember { mutableStateOf<String?>("") }
+    var editLocalitate by remember { mutableStateOf<String?>("") }
+    var editLocalitateId by remember { mutableStateOf<Long?>(0) }
+
+    // Liste de locatii
+    var listaJudete by remember { mutableStateOf<List<String>>(emptyList()) }
+    var listaOraseByJudet by remember { mutableStateOf<List<LocalitateDTO>>(emptyList()) }
+
+
+    var localitateState by remember{ mutableStateOf<LocalitateDTO?>(null)}
+
+    LaunchedEffect(anuntId) {
+        try {
+            val data = RetrofitClient.anuntService.getAnuntDetails(anuntId)
+            anunt = data
+            localitateState = RetrofitClient.localitateService.getLocalitateDetails(anunt?.locatieId)
+            // Inițializăm câmpurile de editare cu datele primite
+            editTitlu = data.titlu
+            editDescriere = data.descriere
+            editSpecie = data.specie
+            editRasa = data.rasa
+            editGen = data.gen
+            editVarsta = data.varsta
+            editStare = data.stare
+            editJudet = localitateState?.judet
+            editLocalitate = localitateState?.nume
+            editLocalitateId = localitateState?.id
+        } catch (e: Exception) { e.printStackTrace() }
+
+        try {
+            // Încarcă speciile și rasele de la backend
+            val response = RetrofitClient.animaluteService.getRase()
+            raseMap = response
+        } catch (e: Exception) { e.printStackTrace() }
+
+        isLoading = false
+    }
+
+    LaunchedEffect(Unit) {
+        listaJudete = RetrofitClient.localitateService.getJudete()
+    }
+    LaunchedEffect(editJudet) {
+        if (editJudet != null) {
+            try {
+                listaOraseByJudet = RetrofitClient.localitateService.getByJudet(editJudet!!)
+            } catch (e: Exception) { /* Log eroare */
+            }
+        } else {
+            listaOraseByJudet = emptyList()
+        }
+    }
+
+    val isDataValid = editTitlu.isNotBlank() &&
+            editDescriere.length >= 10 &&
+            editSpecie.isNotBlank() &&
+            editRasa.isNotBlank() &&
+            editJudet?.isNotBlank() == true &&
+            editLocalitate?.isNotBlank() == true
+
+    Scaffold(){ padding ->
+        if (isLoading) { /* CircularProgressIndicator */ }
+        else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                // BACK
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.align(Alignment.TopStart)
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                }
+
+                // TITLE
+                Text(
+                    text = "Anunt",
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                // EDIT / SAVE
+                IconButton(
+                    onClick = {
+                        if (isEditing) {
+                            scope.launch {
+                                try {
+                                    val updatedDto = anunt!!.copy(
+                                        titlu = editTitlu,
+                                        descriere = editDescriere,
+                                        specie = editSpecie,
+                                        rasa = editRasa,
+                                        gen = editGen!!,
+                                        varsta = editVarsta!!,
+                                        stare = editStare!!,
+                                        locatieId = editLocalitateId!!
+                                    )
+                                    val response =
+                                        RetrofitClient.anuntService.editareAnuntPropriu(anuntId, updatedDto)
+                                    if (response.isSuccessful) {
+                                        anunt = response.body()
+                                        isEditing = false
+                                        Toast.makeText(context, "Salvat cu succes!", Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Eroare la salvare", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            isEditing = true
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    enabled = !isEditing || isDataValid
+                ) {
+                    Icon(
+                        imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                        contentDescription = if (isEditing) "Salvează" else "Editează",
+                        tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
+                    )
+                }
+            }
+
+        }
+
+            Column(modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)) {
+
+                ImageCarousel(imageUrls = anunt?.listaImagini ?: emptyList())
+                Spacer(Modifier.height(16.dp))
+
+                if (isEditing) {
+                    // Câmpuri de editare
+                    OutlinedTextField(
+                        value = editTitlu,
+                        onValueChange = { editTitlu = it },
+                        label = { Text("Titlu Anunț") },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = editTitlu.isBlank(),
+                        supportingText = {
+                            if (editTitlu.isBlank()) Text("Camp obligatoriu", color = Color.Red)
+                        }
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = editDescriere,
+                        onValueChange = { editDescriere = it },
+                        label = { Text("Descriere") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        isError = editTitlu.isBlank(),
+                        supportingText = {
+                            if (editTitlu.isBlank()) Text("Camp obligatoriu", color = Color.Red)
+                        }
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+                    // 1. Dropdown SPECIE
+                    EditDropdown(
+                        label = "Specie",
+                        selectedValue = editSpecie,
+                        options = raseMap.keys.toList(),
+                        optionToString = { it },
+                        onValueChange = {
+                            editSpecie = it
+                            editRasa = raseMap[it]?.firstOrNull() ?: "" // Resetăm rasa la prima disponibilă din noua specie
+                        },
+                        expanded = expandedSpecie,
+                        onExpandedChange = { expandedSpecie = it }
+                    )
+
+                    // 2. Dropdown RASĂ (depinde de Specie)
+                    EditDropdown(
+                        label = "Rasă",
+                        selectedValue = editRasa,
+                        options = raseMap[editSpecie] ?: emptyList(),
+                        optionToString = { it },
+                        onValueChange = { editRasa = it },
+                        expanded = expandedRasa,
+                        onExpandedChange = { expandedRasa = it }
+                    )
+
+                    // 3. Dropdown GEN (Enum)
+                    EditDropdown(
+                        label = "Gen",
+                        selectedValue = editGen?.name?.lowercase() ?: "",
+                        options = Gen.entries, // Presupunând că ai enum-ul Gen cu entries (Kotlin 1.9+)
+                        optionToString = { it.name.lowercase() },
+                        onValueChange = { editGen = it },
+                        expanded = expandedGen,
+                        onExpandedChange = { expandedGen = it }
+                    )
+
+                    // 4. Dropdown VÂRSTĂ (Enum)
+                    EditDropdown(
+                        label = "Vârstă",
+                        selectedValue = editVarsta?.display ?: "",
+                        options = Varsta.entries,
+                        optionToString = { it.display },
+                        onValueChange = { editVarsta = it },
+                        expanded = expandedVarsta,
+                        onExpandedChange = { expandedVarsta = it }
+                    )
+                    // 5. Dropdown Stare (Enum)
+                    EditDropdown(
+                        label = "Stare",
+                        selectedValue = editStare?.name?.lowercase() ?: "",
+                        options = listOf(Stare.ACTIV, Stare.INACTIV),
+                        optionToString = { it.name.lowercase() },
+                        onValueChange = { editStare = it },
+                        expanded = expandedStare,
+                        onExpandedChange = { expandedStare = it }
+                    )
+                    //6. Dropdown Judet
+                    EditDropdown(
+                        label = "Judet",
+                        selectedValue = editJudet ?: "",
+                        options = listaJudete,
+                        optionToString = { it },
+                        onValueChange = {
+                            editJudet = it
+                            editLocalitate = ""
+                                        },
+                        expanded = expandedJudet,
+                        onExpandedChange = { expandedJudet = it }
+                    )
+                    //6. Dropdown Localitate
+                    if(editJudet != null) {
+                        EditDropdown(
+                            label = "Localitate",
+                            selectedValue = editLocalitate ?: "",
+                            options = listaOraseByJudet,
+                            optionToString = { it.nume },
+                            onValueChange = {
+                                editLocalitate = it.nume
+                                editLocalitateId = it.id
+                                            },
+                            expanded = expandedLocalitate,
+                            onExpandedChange = { expandedLocalitate = it }
+                        )
+                    }
+
+
+                } else {
+                    // Vizualizare normală (Reutilizăm stilul tău)
+                    Text(anunt?.titlu ?: "", fontSize = 26.sp, fontWeight = FontWeight.W400)
+                    HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                    Text(anunt?.descriere ?: "", fontSize = 18.sp)
+                    // Restul detaliilor (Specie, Rasă etc.) rămân sub formă de Text momentan
+                    Spacer(Modifier.height(16.dp))
+                    Text("Specie: ${anunt?.specie}", style = MaterialTheme.typography.bodyLarge)
+                    Text("Rasă: ${anunt?.rasa}", style = MaterialTheme.typography.bodyLarge)
+                    Text("Gen: ${anunt?.gen?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
+                    Text("Varsta: ${anunt?.varsta?.display}", style = MaterialTheme.typography.bodyLarge)
+                    Text("Stare: ${anunt?.stare?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = "Locatie: ${editLocalitate}, ${editJudet}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+
+            }
+        }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> EditDropdown(
+    label: String,
+    selectedValue: String,
+    options: List<T>,
+    optionToString: (T) -> String,
+    onValueChange: (T) -> Unit,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit
+) {
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        OutlinedTextField(
+            value = selectedValue,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            isError = selectedValue.isBlank()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { onExpandedChange(false) }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(optionToString(option)) },
+                    onClick = {
+                        onValueChange(option)
+                        onExpandedChange(false)
+                    }
+                )
+            }
+        }
+    }
+}
+
+fun resetProfileStack(navController: NavHostController){
+    navController.popBackStack(
+        route = SetariRoutes.Main.route,
+        inclusive = false
+    )
 }

@@ -15,10 +15,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,18 +42,24 @@ import com.example.adoptie.BASE_URL
 import com.example.adoptie.RetrofitClient
 import com.example.adoptie.anunt.AnuntCard
 import com.example.adoptie.anunt.Stare
+import com.example.adoptie.localitate.LocalitateDTO
 
 @Composable
 fun ProfilUtilizatorScreen(
     userId: Long,
-    onNavigateToDetails: (Long) -> Unit
+    onNavigateToDetails: (Long) -> Unit,
+    onBack: () -> Unit
 ) {
     var profilState by remember {
         mutableStateOf<ProfilState>(ProfilState.Loading)
     }
+
+    var localitateState by remember{ mutableStateOf<LocalitateDTO?>(null)}
+
     LaunchedEffect(userId) {
         profilState = try {
             val user = RetrofitClient.utilizatorService.getUtilizatorDetails(userId)
+            localitateState = RetrofitClient.localitateService.getLocalitateDetails(user.localitateId)
             val anunturi = user.anuntIds.mapNotNull { anuntId ->
                 try{
                     val anunt = RetrofitClient.anuntService.getAnuntDetails(anuntId)
@@ -80,17 +88,39 @@ fun ProfilUtilizatorScreen(
             is ProfilState.Error -> Box(Modifier
                 .padding(innerPadding)
                 .fillMaxSize(), contentAlignment = Alignment.Center) { Text(state.message, color = MaterialTheme.colorScheme.error) }
-            is ProfilState.Success -> ProfilContent(state.details,
+            is ProfilState.Success -> ProfilContent(
+                state.details,
                 onNavigateToDetails = onNavigateToDetails,
-                Modifier.padding(innerPadding))
+                Modifier.padding(innerPadding),
+                localitate = localitateState,
+                onBack = onBack
+            )
         }
     }
 }
 
 @Composable
-fun ProfilContent(details: ProfilDetails, onNavigateToDetails: (Long) -> Unit, modifier: Modifier = Modifier) {
+fun ProfilContent(details: ProfilDetails, onNavigateToDetails: (Long) -> Unit, modifier: Modifier = Modifier, localitate: LocalitateDTO?, onBack: () -> Unit) {
     val user = details.user
     val context = LocalContext.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.align(Alignment.TopStart)
+        ) {
+            Icon(Icons.Default.ArrowBack, contentDescription = null)
+        }
+
+        Text(
+            text = "Detaliile utilizatorului ${user.nume}",
+            modifier = Modifier.align(Alignment.Center),
+            style = MaterialTheme.typography.titleLarge
+        )
+    }
     LazyColumn (
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)
     ){
@@ -129,6 +159,10 @@ fun ProfilContent(details: ProfilDetails, onNavigateToDetails: (Long) -> Unit, m
                     Text(user.telefon, style = MaterialTheme.typography.bodyMedium)
                 }
 
+//                Text(
+//                    text = "${localitate?.nume}, ${localitate?.judet}",
+//                    style = MaterialTheme.typography.bodyMedium
+//                )
                 Spacer(Modifier.height(16.dp))
                 Divider()
                 Spacer(Modifier.height(16.dp))

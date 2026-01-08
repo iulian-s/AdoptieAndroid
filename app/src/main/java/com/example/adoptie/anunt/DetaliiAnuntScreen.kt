@@ -5,12 +5,18 @@ package com.example.adoptie.anunt
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,7 +40,11 @@ import com.example.adoptie.utilizator.UtilizatorDTO
 
 
 @Composable
-fun DetaliiAnuntScreen(anuntId: Long, onNavigateToProfile: (Long) -> Unit) {
+fun DetaliiAnuntScreen(
+    anuntId: Long,
+    onNavigateToProfile: (Long) -> Unit,
+    onBack: () -> Unit
+) {
     var detaliiState by remember { mutableStateOf<DetaliiState>(DetaliiState.Loading) }
     LaunchedEffect(anuntId) {
         detaliiState = try {
@@ -63,7 +73,8 @@ fun DetaliiAnuntScreen(anuntId: Long, onNavigateToProfile: (Long) -> Unit) {
                         user = state.details.user,
                         localitate = state.details.localitate,
                         onNavigateToProfile = onNavigateToProfile,
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
+                        onBack = onBack
                     )
                 }
             }
@@ -71,7 +82,32 @@ fun DetaliiAnuntScreen(anuntId: Long, onNavigateToProfile: (Long) -> Unit) {
 }
 
 @Composable
-fun DetaliiContent(anunt: AnuntDTO, user: UtilizatorDTO, localitate: LocalitateDTO, onNavigateToProfile: (Long) -> Unit,  modifier: Modifier = Modifier) {
+fun DetaliiContent(
+    anunt: AnuntDTO,
+    user: UtilizatorDTO? = null,
+    localitate: LocalitateDTO? = null,
+    onNavigateToProfile: ((Long) -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    isEditable: Boolean = false,
+    onBack: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.align(Alignment.TopStart)
+        ) {
+            Icon(Icons.Default.ArrowBack, contentDescription = null)
+        }
+
+        Text(
+            text = "Detalii Anunt",
+            modifier = Modifier.align(Alignment.Center),
+            style = MaterialTheme.typography.titleLarge
+        )
+    }
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)
     ) {
@@ -92,14 +128,19 @@ fun DetaliiContent(anunt: AnuntDTO, user: UtilizatorDTO, localitate: LocalitateD
             Text("Rasă: ${anunt.rasa}", style = MaterialTheme.typography.bodyLarge)
             Text("Gen: ${anunt.gen.name.lowercase()}", style = MaterialTheme.typography.bodyLarge)
             Text("Vârstă: ${anunt.varsta.display}", style = MaterialTheme.typography.bodyLarge)
+            if(isEditable){
+                Text("Stare: ${anunt.stare}", style = MaterialTheme.typography.bodyLarge)
+            }
             Spacer(Modifier.height(16.dp))
         }
-        item{
-            UtilizatorCard(
-                user = user,
-                localitate = localitate,
-                onCardClick = {onNavigateToProfile(user.id)}
+        if (!isEditable && user != null && localitate != null && onNavigateToProfile != null) {
+            item {
+                UtilizatorCard(
+                    user = user,
+                    localitate = localitate,
+                    onCardClick = { onNavigateToProfile(user.id) }
                 )
+            }
         }
 
     }

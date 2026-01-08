@@ -10,7 +10,7 @@ interface LocalitateApiService {
     suspend fun getAllLocalitati(): List<LocalitateDTO>
 
     @GET("api/localitati/{id}")
-    suspend fun getLocalitateDetails(@Path("id") id: Long): LocalitateDTO
+    suspend fun getLocalitateDetails(@Path("id") id: Long?): LocalitateDTO
 
     @GET("api/localitati/judete")
     suspend fun getJudete(): List<String>

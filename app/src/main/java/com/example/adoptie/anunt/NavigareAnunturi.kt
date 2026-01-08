@@ -61,7 +61,8 @@ fun ExploreazaScreen(
                     anuntId = anuntId,
                     onNavigateToProfile = { userId ->
                         anunturiNavController.navigate(AnunturiRoutes.profileRoute(userId))
-                    }
+                    },
+                    onBack = { anunturiNavController.popBackStack() }
                 )
 
             } else {
@@ -81,7 +82,8 @@ fun ExploreazaScreen(
                 if(userId != null){
                    ProfilUtilizatorScreen(
                        userId = userId,
-                       onNavigateToDetails = onNavigateToDetails
+                       onNavigateToDetails = onNavigateToDetails,
+                       onBack = { anunturiNavController.popBackStack() }
                    )
                 } else {
                     Text("Eroare: Id-ul utilizatorului nu exista.")
