@@ -17,3 +17,12 @@ data class UtilizatorDTO(
 enum class Rol {
     USER, ADMIN
 }
+
+data class EditareUtilizatorDTO(
+    val nume: String,
+    var localitateId: Long = 0,
+    val telefon: String,
+    val avatar: String? = null,
+    val parolaVeche: String? = null,
+    val parolaNoua: String? = null
+)
