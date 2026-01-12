@@ -56,13 +56,13 @@ class MainActivity : ComponentActivity() {
                         Icons.Outlined.AddCircle,
                         hasNews = false
                     ),
-                    NavigationItem(
-                        "Chat",
-                        Icons.Filled.Email,
-                        Icons.Outlined.Email,
-                        hasNews = false,
-                        badgeCount = 12
-                    ),
+//                    NavigationItem(
+//                        "Chat",
+//                        Icons.Filled.Email,
+//                        Icons.Outlined.Email,
+//                        hasNews = false,
+//                        badgeCount = 12
+//                    ),
 
                     NavigationItem(
                         "Profil",
@@ -141,8 +141,8 @@ class MainActivity : ComponentActivity() {
                             )
 
                             1 -> AdaugaScreen()
-                            2 -> ChatScreen()
-                            3 -> SetariScreen(
+                            //2 -> ChatScreen()
+                            2 -> SetariScreen(
                                 onNavigateToGlobalDetail = { id ->
                                     println("Navigat la anuntul: $id")
                                     anunturiNavController?.navigate(AnunturiRoutes.detailsRoute(id))

@@ -1,6 +1,9 @@
 package com.example.adoptie
 
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,12 +17,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -30,6 +36,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,6 +51,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -60,6 +68,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -90,7 +99,13 @@ import com.example.adoptie.auth.AuthApiService
 import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.localitate.LocalitateDTO
 import com.example.adoptie.utilizator.ProfilulMeuScreen
+import com.example.adoptie.utilizator.createTempFileFromUri
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlin.text.lowercase
 
 sealed class SetariRoutes(val route: String){
@@ -742,8 +757,16 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
     var listaJudete by remember { mutableStateOf<List<String>>(emptyList()) }
     var listaOraseByJudet by remember { mutableStateOf<List<LocalitateDTO>>(emptyList()) }
 
-
     var localitateState by remember{ mutableStateOf<LocalitateDTO?>(null)}
+
+    //imagini
+    var imaginiNoiUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
+    val multiplePhotoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris -> imaginiNoiUris = uris }
+
+    var showBackupWarning by remember { mutableStateOf(false) }
 
     LaunchedEffect(anuntId) {
         try {
@@ -793,6 +816,43 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
             editJudet?.isNotBlank() == true &&
             editLocalitate?.isNotBlank() == true
 
+    fun executaSalvareaAnuntului() {
+        scope.launch {
+            try {
+                val updatedDto = anunt!!.copy(
+                    titlu = editTitlu,
+                    descriere = editDescriere,
+                    specie = editSpecie,
+                    rasa = editRasa,
+                    gen = editGen!!,
+                    varsta = editVarsta!!,
+                    stare = editStare!!,
+                    locatieId = editLocalitateId!!
+                )
+
+                val dtoPart = Gson().toJson(updatedDto).toRequestBody("application/json".toMediaTypeOrNull())
+                val imaginiParts = imaginiNoiUris.map { uri ->
+                    val file = context.createTempFileFromUri(uri)
+                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                    MultipartBody.Part.createFormData("imagini", file.name, requestFile)
+                }
+
+                val response = RetrofitClient.anuntService.editareAnuntPropriu(
+                    anuntId, dtoPart, imaginiParts.ifEmpty { null }
+                )
+                if (response.isSuccessful) {
+                    anunt = response.body()
+                    imaginiNoiUris = emptyList()
+                    isEditing = false
+                    Toast.makeText(context, "Salvat cu succes!", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Eroare la salvare", Toast.LENGTH_SHORT).show()
+                println(e.message)
+            }
+        }
+    }
+
     Scaffold(){ padding ->
         if (isLoading) { /* CircularProgressIndicator */ }
         else {
@@ -820,28 +880,10 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 IconButton(
                     onClick = {
                         if (isEditing) {
-                            scope.launch {
-                                try {
-                                    val updatedDto = anunt!!.copy(
-                                        titlu = editTitlu,
-                                        descriere = editDescriere,
-                                        specie = editSpecie,
-                                        rasa = editRasa,
-                                        gen = editGen!!,
-                                        varsta = editVarsta!!,
-                                        stare = editStare!!,
-                                        locatieId = editLocalitateId!!
-                                    )
-                                    val response =
-                                        RetrofitClient.anuntService.editareAnuntPropriu(anuntId, updatedDto)
-                                    if (response.isSuccessful) {
-                                        anunt = response.body()
-                                        isEditing = false
-                                        Toast.makeText(context, "Salvat cu succes!", Toast.LENGTH_SHORT).show()
-                                    }
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Eroare la salvare", Toast.LENGTH_SHORT).show()
-                                }
+                            if (imaginiNoiUris.isNotEmpty()) {
+                                showBackupWarning = true
+                            } else {
+                                executaSalvareaAnuntului()
                             }
                         } else {
                             isEditing = true
@@ -870,6 +912,30 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 Spacer(Modifier.height(16.dp))
 
                 if (isEditing) {
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick = { multiplePhotoPicker.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.AddCircle, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Adaugă imagini noi (${imaginiNoiUris.size})")
+                    }
+
+                    // Preview poze noi selectate
+                    if (imaginiNoiUris.isNotEmpty()) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(imaginiNoiUris) { uri ->
+                                AsyncImage(model = uri, contentDescription = null, modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                if (isEditing) {
+
                     // Câmpuri de editare
                     OutlinedTextField(
                         value = editTitlu,
@@ -1001,7 +1067,34 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
 
 
             }
+        if (showBackupWarning) {
+            AlertDialog(
+                onDismissRequest = { showBackupWarning = false },
+                title = { Text(text = "Atenție!") },
+                text = {
+                    Text(text = "Modificarea va înlocui complet imaginile actuale. Vă rugăm să faceți backup dacă nu le mai aveți stocate în altă parte.")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showBackupWarning = false
+                            executaSalvareaAnuntului() // Utilizatorul a confirmat, pornim salvarea
+                        }
+                    ) {
+                        Text("Am înțeles, salvează")
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(onClick = { showBackupWarning = false }) {
+                        Text("Anulează")
+                    }
+                }
+            )
         }
+
+
+        }
+
 
 }
 
@@ -1050,6 +1143,8 @@ fun <T> EditDropdown(
         }
     }
 }
+
+
 
 fun resetProfileStack(navController: NavHostController){
     navController.popBackStack(
