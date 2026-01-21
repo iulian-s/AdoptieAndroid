@@ -59,7 +59,7 @@ fun ProfilUtilizatorScreen(
     LaunchedEffect(userId) {
         profilState = try {
             val user = RetrofitClient.utilizatorService.getUtilizatorDetails(userId)
-            localitateState = RetrofitClient.localitateService.getLocalitateDetails(user.localitateId)
+            //localitateState = RetrofitClient.localitateService.getLocalitateDetails(user.localitateId)
             val anunturi = user.anuntIds.mapNotNull { anuntId ->
                 try{
                     val anunt = RetrofitClient.anuntService.getAnuntDetails(anuntId)

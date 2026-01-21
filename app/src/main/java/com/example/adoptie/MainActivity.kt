@@ -24,16 +24,19 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.example.adoptie.anunt.AnunturiRoutes
 import com.example.adoptie.anunt.ExploreazaScreen
 import com.example.adoptie.anunt.resetAnunturiStack
+import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.ui.theme.AdoptieTheme
 
 class MainActivity : ComponentActivity() {
@@ -81,6 +84,8 @@ class MainActivity : ComponentActivity() {
                 var profileNavController: NavHostController? by remember {
                     mutableStateOf(null)
                 }
+                var setariNavHostController by remember { mutableStateOf<NavHostController?>(null) }
+
 
                 Scaffold(
                     bottomBar = {
@@ -140,15 +145,49 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
 
-                            1 -> AdaugaScreen()
+                            1 -> {
+                                val context = LocalContext.current
+                                val tokenManager = remember { TokenManager(context) }
+                                val token = tokenManager.getToken()
+                                if (token == null) {
+                                    // Redirecționăm direct din Main, fără să mai intrăm în AdaugaScreen
+                                    LaunchedEffect(Unit) {
+                                        selectedItemIndex = 2
+                                        setariNavHostController?.navigate(SetariRoutes.Login.route)
+                                    }
+                                } else {
+                                    AdaugaScreen(
+                                        onSuccess = { selectedItemIndex = 0 },
+                                        onNavigateToLogin = { /* Deja verificat mai sus */ }
+                                    )
+                                }
+//                            }AdaugaScreen(
+//                                onSuccess = {
+//                                    selectedItemIndex = 0
+//                                    anunturiNavController?.navigate(AnunturiRoutes.LIST) {
+//                                        popUpTo(AnunturiRoutes.LIST) { inclusive = true }
+//                                    }
+//                                },
+//                                onNavigateToLogin = {
+////                                    selectedItemIndex = 2
+////                                    setariNavHostController?.let { controller ->
+////                                        controller.navigate(SetariRoutes.Login.route) {
+////                                            // Evităm duplicarea paginii de login în stivă
+////                                            launchSingleTop = true
+////                                        }
+////                                    }
+//                                }
+//                            )
+                            }
                             //2 -> ChatScreen()
                             2 -> SetariScreen(
                                 onNavigateToGlobalDetail = { id ->
                                     println("Navigat la anuntul: $id")
                                     anunturiNavController?.navigate(AnunturiRoutes.detailsRoute(id))
                                 },
-                                onProfileNavControllerReady = {
-                                    profileNavController = it
+                                onProfileNavControllerReady = { controller ->
+                                    profileNavController = controller
+                                    setariNavHostController = controller
                                 }
                             )
                         }

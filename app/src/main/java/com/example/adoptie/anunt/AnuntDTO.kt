@@ -23,6 +23,20 @@ data class AnuntDTO(
     val updatedAt: String = ""
 )
 
+data class CreareAnuntDTO(
+    var titlu: String = "",
+    var descriere: String = "",
+    var specie: String = "",
+    var rasa: String = "",
+    var gen: Gen = Gen.MASCUL,
+    var varsta: Varsta = Varsta.NECUNOSCUT,
+    var varstaMin: Int? = varsta.minLuni,
+    var varstaMax: Int? = varsta.maxLuni,
+    val utilizatorId: Long = 0,
+    var stare: Stare = Stare.NEVERIFICAT,
+    var locatieId: Long = 0
+)
+
 enum class Varsta(val display: String, val minLuni: Int?, val maxLuni: Int?) {
     ZERO_TREI_LUNI("0-3 luni", 0, 3),
     TREI_SASE_LUNI("3-6 luni", 3, 6),

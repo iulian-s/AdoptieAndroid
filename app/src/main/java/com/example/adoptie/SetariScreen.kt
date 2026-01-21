@@ -140,12 +140,20 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
     ) {
         // Pagina principală de Setări
         composable(SetariRoutes.Main.route) {
+            LaunchedEffect(isLoggedIn) {
+                if (!isLoggedIn) {
+                    // Putem lăsa utilizatorul pe pagina de "Intră în cont"
+                    // sau să îl trimitem automat la ecranul de Login
+                     setariNavController.navigate(SetariRoutes.Login.route)
+                }
+            }
             SetariMainContent(
                 isLoggedIn = isLoggedIn,
                 onNavigateToLogin = { setariNavController.navigate(SetariRoutes.Login.route) },
                 onLogout = {
-                    tokenManager.deleteToken()
                     isLoggedIn = false // Actualizăm starea pentru a schimba UI-ul instant
+                    tokenManager.deleteToken()
+
                 },
                 onNavigateToProfil = { setariNavController.navigate(SetariRoutes.ProfilulMeu.route) },
                 onNavigateToAnunturi = { setariNavController.navigate(SetariRoutes.AnunturileMele.route) },
@@ -227,13 +235,14 @@ fun SetariMainContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(
-            text = "Profil",
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
+
 
         if (isLoggedIn) {
+            Text(
+                text = "Profil",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
             // UI pentru utilizator LOGAT
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -270,20 +279,23 @@ fun SetariMainContent(
                 Text("Deconectare")
             }
         } else {
-            // UI pentru utilizator ANONIM
-            Text(
-                text = "Conectează-te pentru a putea posta anunțuri și a comunica cu alți utilizatori.",
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodyLarge
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = onNavigateToLogin,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Intră în cont")
+//            // UI pentru utilizator ANONIM
+//            Text(
+//                text = "Conectează-te pentru a putea posta anunțuri și a comunica cu alți utilizatori.",
+//                textAlign = TextAlign.Center,
+//                style = MaterialTheme.typography.bodyLarge
+//            )
+//
+//            Spacer(modifier = Modifier.height(24.dp))
+//
+//            Button(
+//                onClick = onNavigateToLogin,
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Text("Intră în cont")
+//            }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
         }
     }
@@ -301,15 +313,15 @@ fun LoginScreen(onNavigateToRegister: () -> Unit, onBack: () -> Unit, navControl
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(24.dp)) {
-        IconButton(onClick = onBack) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Înapoi")
-        }
+//        IconButton(onClick = onBack) {
+//            Icon(Icons.Default.ArrowBack, contentDescription = "Înapoi")
+//        }
 
         if (errorMessage != null) {
             Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
         }
 
-        Text("Bine ai revenit!", style = MaterialTheme.typography.headlineLarge)
+        Text("Bine ai venit!", style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
@@ -704,7 +716,12 @@ fun AnuntPropriuItem(
 
                 // Tag pentru Status (Activ/Inactiv)
                 val statusColor = if (anunt.stare == Stare.ACTIV) Color(0xFF4CAF50) else Color.Gray
-                val statusText = if (anunt.stare == Stare.ACTIV) "Activ" else "Inactiv"
+                //val statusText = if (anunt.stare == Stare.ACTIV) "Activ" else "Inactiv"
+                val statusText = when(anunt.stare){
+                    Stare.ACTIV -> "Activ"
+                    Stare.INACTIV -> "Inactiv"
+                    Stare.NEVERIFICAT -> "Neverificat"
+                }
 
                 Surface(
                     color = statusColor.copy(alpha = 0.1f),
@@ -877,27 +894,30 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 )
 
                 // EDIT / SAVE
-                IconButton(
-                    onClick = {
-                        if (isEditing) {
-                            if (imaginiNoiUris.isNotEmpty()) {
-                                showBackupWarning = true
+                if(editStare != Stare.NEVERIFICAT){
+                    IconButton(
+                        onClick = {
+                            if (isEditing) {
+                                if (imaginiNoiUris.isNotEmpty()) {
+                                    showBackupWarning = true
+                                } else {
+                                    executaSalvareaAnuntului()
+                                }
                             } else {
-                                executaSalvareaAnuntului()
+                                isEditing = true
                             }
-                        } else {
-                            isEditing = true
-                        }
-                    },
-                    modifier = Modifier.align(Alignment.TopEnd),
-                    enabled = !isEditing || isDataValid
-                ) {
-                    Icon(
-                        imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                        contentDescription = if (isEditing) "Salvează" else "Editează",
-                        tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
-                    )
+                        },
+                        modifier = Modifier.align(Alignment.TopEnd),
+                        enabled = !isEditing || isDataValid
+                    ) {
+                        Icon(
+                            imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                            contentDescription = if (isEditing) "Salvează" else "Editează",
+                            tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
+                        )
+                    }
                 }
+
             }
 
         }
@@ -940,7 +960,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     OutlinedTextField(
                         value = editTitlu,
                         onValueChange = { editTitlu = it },
-                        label = { Text("Titlu Anunț") },
+                        label = { Text("Nume") },
                         modifier = Modifier.fillMaxWidth(),
                         isError = editTitlu.isBlank(),
                         supportingText = {
@@ -1008,6 +1028,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                         onExpandedChange = { expandedVarsta = it }
                     )
                     // 5. Dropdown Stare (Enum)
+
                     EditDropdown(
                         label = "Stare",
                         selectedValue = editStare?.name?.lowercase() ?: "",
@@ -1017,6 +1038,8 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                         expanded = expandedStare,
                         onExpandedChange = { expandedStare = it }
                     )
+
+
                     //6. Dropdown Judet
                     EditDropdown(
                         label = "Judet",
