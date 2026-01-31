@@ -3,7 +3,7 @@ enum class Gen {
     MASCUL, FEMELA
 }
 enum class Stare {
-    NEVERIFICAT, ACTIV, INACTIV
+    ACTIV, INACTIV, NEVERIFICAT
 }
 
 data class AnuntDTO(

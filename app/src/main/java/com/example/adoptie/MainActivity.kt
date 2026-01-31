@@ -99,15 +99,15 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
 
 
-                LaunchedEffect(Unit) {
-                    AuthEvents.logoutEvent.collect {
-                        selectedItemIndex = 2 // Tab-ul de Setări
-                        setariNavHostController?.navigate(SetariRoutes.Login.route) {
-                            popUpTo(0) // Curățăm toată stiva de navigare
-                        }
-                        Toast.makeText(context, "Sesiune expirată. Te rugăm să te reconectezi.", Toast.LENGTH_LONG).show()
-                    }
-                }
+//                LaunchedEffect(Unit) {
+//                    AuthEvents.logoutEvent.collect {
+//                        selectedItemIndex = 2 // Tab-ul de Setări
+//                        setariNavHostController?.navigate(SetariRoutes.Login.route) {
+//                            popUpTo(0) // Curățăm toată stiva de navigare
+//                        }
+//                        Toast.makeText(context, "Sesiune expirată. Te rugăm să te reconectezi.", Toast.LENGTH_LONG).show()
+//                    }
+//                }
 
 
                 Scaffold(

@@ -3,7 +3,9 @@ package com.example.adoptie
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -601,7 +603,11 @@ fun AnunturileMeleScreen(
         try {
             val response = RetrofitClient.utilizatorService.getAnunturiProprii()
             if (response.isSuccessful) {
-                anunturi = response.body() ?: emptyList()
+                val listaAnunturi = response.body() ?: emptyList()
+                anunturi = listaAnunturi.sortedWith(
+                    compareBy<AnuntDTO> { it.stare}
+                        .thenByDescending{it.updatedAt}
+                )
             }
         } catch (e: Exception) { e.printStackTrace() }
         isLoading = false
@@ -643,7 +649,7 @@ fun AnunturileMeleScreen(
                         onDetailClick = { id ->
                             println("Click pe anunțul: $id")
                             onNavigateToDetail(id) }
-                    ) // Un card mai mic care poate include buton de Șterge/Editează
+                    )
                 }
             }
         }
@@ -780,10 +786,12 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
     var imaginiNoiUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
     val multiplePhotoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 5)
     ) { uris -> imaginiNoiUris = uris }
 
     var showBackupWarning by remember { mutableStateOf(false) }
+
+    var isSaving by remember { mutableStateOf(false) }
 
     LaunchedEffect(anuntId) {
         try {
@@ -827,13 +835,13 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
     }
 
     val isDataValid = editTitlu.isNotBlank() &&
-            editDescriere.length >= 10 &&
             editSpecie.isNotBlank() &&
             editRasa.isNotBlank() &&
             editJudet?.isNotBlank() == true &&
             editLocalitate?.isNotBlank() == true
 
     fun executaSalvareaAnuntului() {
+        isSaving = true
         scope.launch {
             try {
                 val updatedDto = anunt!!.copy(
@@ -861,11 +869,14 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     anunt = response.body()
                     imaginiNoiUris = emptyList()
                     isEditing = false
-                    Toast.makeText(context, "Salvat cu succes!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Anunt actualizat cu succes!", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Eroare la salvare", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Eroare la actualizare, va rugam incercati mai tarziu!", Toast.LENGTH_SHORT).show()
                 println(e.message)
+            }
+            finally {
+                isSaving = false
             }
         }
     }
@@ -934,7 +945,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 if (isEditing) {
                     Spacer(Modifier.height(8.dp))
                     Button(
-                        onClick = { multiplePhotoPicker.launch("image/*") },
+                        onClick = { multiplePhotoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.AddCircle, null)
@@ -1070,6 +1081,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     }
 
 
+
                 } else {
                     // Vizualizare normală (Reutilizăm stilul tău)
                     Text(anunt?.titlu ?: "", fontSize = 26.sp, fontWeight = FontWeight.W400)
@@ -1090,6 +1102,21 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
 
 
             }
+        if (isSaving) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .clickable(enabled = false) { }, // Blocăm click-urile
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Se actualizeaza informatiile...", color = Color.Black)
+                }
+            }
+        }
         if (showBackupWarning) {
             AlertDialog(
                 onDismissRequest = { showBackupWarning = false },

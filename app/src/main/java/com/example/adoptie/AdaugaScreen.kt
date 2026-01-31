@@ -3,6 +3,7 @@ package com.example.adoptie
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.adoptie.anunt.CreareAnuntDTO
@@ -61,6 +63,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import kotlin.collections.firstOrNull
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +99,8 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
 
     var judet by remember { mutableStateOf<String?>("") }
     var localitate by remember { mutableStateOf<String?>("") }
+
+
 
 
     val scope = rememberCoroutineScope()
@@ -146,7 +151,7 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
 
     // Picker pentru imagini multiple
     val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 5)
     ) { uris -> imaginiUris = uris }
 
     Scaffold(
@@ -160,7 +165,7 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
         ) {
             // Secțiune Selectare Imagini
             Button(
-                onClick = { photoPickerLauncher.launch("image/*") },
+                onClick = { photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.Add, null)
@@ -293,6 +298,7 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     scope.launch {
                         isSubmitting = true
                         try {
+
                             // 1. Pregătim DTO-ul conform specificațiilor backend
                             val dto = CreareAnuntDTO(
                                 titlu = titlu,
@@ -336,10 +342,8 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
             if (showSuccessDialog) {
                 AlertDialog(
                     onDismissRequest = { /* Nu permitem închiderea prin click afară pentru a asigura fluxul */ },
-                    title = { Text("Anunț trimis!") },
-                    text = {
-                        Text("Anunțul a fost trimis cu succes și va fi listat după aprobarea adminului.")
-                    },
+                    text = { Text("Anunțul a fost inregistrat cu succes!") },
+
                     confirmButton = {
                         Button(
                             onClick = {
