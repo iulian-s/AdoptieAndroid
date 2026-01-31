@@ -1,6 +1,7 @@
 package com.example.adoptie
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -38,7 +39,17 @@ import com.example.adoptie.anunt.ExploreazaScreen
 import com.example.adoptie.anunt.resetAnunturiStack
 import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.ui.theme.AdoptieTheme
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
+object AuthEvents {
+    private val _logoutEvent = MutableSharedFlow<Unit>(replay = 0)
+    val logoutEvent = _logoutEvent.asSharedFlow()
+
+    suspend fun triggerLogout() {
+        _logoutEvent.emit(Unit)
+    }
+}
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +96,18 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(null)
                 }
                 var setariNavHostController by remember { mutableStateOf<NavHostController?>(null) }
+                val context = LocalContext.current
+
+
+                LaunchedEffect(Unit) {
+                    AuthEvents.logoutEvent.collect {
+                        selectedItemIndex = 2 // Tab-ul de Setări
+                        setariNavHostController?.navigate(SetariRoutes.Login.route) {
+                            popUpTo(0) // Curățăm toată stiva de navigare
+                        }
+                        Toast.makeText(context, "Sesiune expirată. Te rugăm să te reconectezi.", Toast.LENGTH_LONG).show()
+                    }
+                }
 
 
                 Scaffold(

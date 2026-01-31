@@ -7,6 +7,7 @@ import com.example.adoptie.auth.AuthApiService
 import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.localitate.LocalitateApiService
 import com.example.adoptie.utilizator.UtilizatorApiService
+import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -25,12 +26,21 @@ object RetrofitClient {
     private val authInterceptor = Interceptor { chain ->
         val requestBuilder = chain.request().newBuilder()
 
-        // Adăugăm token-ul dacă există
         tokenManager?.getToken()?.let { token ->
             requestBuilder.addHeader("Authorization", "Bearer $token")
         }
 
-        chain.proceed(requestBuilder.build())
+        val response = chain.proceed(requestBuilder.build())
+
+        if(response.code == 401){
+            tokenManager?.deleteToken()
+            runBlocking { AuthEvents.triggerLogout() }
+        }
+
+        response
+
+
+
     }
     private val logging = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
 
