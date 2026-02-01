@@ -13,7 +13,8 @@ interface AuthApiService {
         val parola: String,
         val nume: String,         // Numele real
         val telefon: String,
-        val rol: String = "USER"
+        val rol: String = "USER",
+        var localitateId: Long? = null
     )
 
 

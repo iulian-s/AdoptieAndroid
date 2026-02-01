@@ -192,7 +192,16 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
         }
 
         composable(SetariRoutes.ProfilulMeu.route) {
-            ProfilulMeuScreen(onBack = { setariNavController.popBackStack() })
+            ProfilulMeuScreen(
+                onBack = { setariNavController.popBackStack() },
+                onAccountDeleted = {
+                    isLoggedIn = false
+                    tokenManager.deleteToken()
+                    setariNavController.navigate(SetariRoutes.Main.route){
+                        popUpTo(0){inclusive = true}
+                    }
+                }
+            )
         }
 
 
@@ -552,6 +561,7 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                             email = email,
                             parola = parola,
                             telefon = telefon
+
                         )
 
                         try {

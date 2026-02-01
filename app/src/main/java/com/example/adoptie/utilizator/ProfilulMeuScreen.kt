@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,7 +71,10 @@ import java.nio.file.WatchEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfilulMeuScreen(onBack: () -> Unit) {
+fun ProfilulMeuScreen(
+    onBack: () -> Unit,
+    onAccountDeleted: () -> Unit
+) {
     var userState by remember { mutableStateOf<UtilizatorDTO?>(null) }
     var localitateState by remember { mutableStateOf<LocalitateDTO?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -86,6 +90,10 @@ fun ProfilulMeuScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var parolaConfirmareInput by remember { mutableStateOf("") }
+    var isDeleting by remember { mutableStateOf(false) }
+
     // Launcher pentru alegerea pozei din galerie
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -99,7 +107,7 @@ fun ProfilulMeuScreen(onBack: () -> Unit) {
                 userState = user
                 editNume = user?.nume ?: ""
                 editTelefon = user?.telefon ?: ""
-                localitateState = RetrofitClient.localitateService.getLocalitateDetails(user?.localitateId)
+                //localitateState = RetrofitClient.localitateService.getLocalitateDetails(user?.localitateId)
 
             }
         } catch (e: Exception) { /* Log eroare */ }
@@ -123,7 +131,7 @@ fun ProfilulMeuScreen(onBack: () -> Unit) {
                                 val editDto = EditareUtilizatorDTO(
                                     nume = editNume,
                                     telefon = editTelefon,
-                                    localitateId = localitateState?.id ?: 0L, // Nu trimite 0, trimite un ID valid
+                                    //localitateId = localitateState?.id ?: 1, // Nu trimite 0, trimite un ID valid
                                     parolaVeche = if (parolaVecheInput.isNotBlank()) parolaVecheInput else null,
                                     parolaNoua = if (parolaNouaInput.isNotBlank()) parolaNouaInput else null
                                 )
@@ -247,6 +255,84 @@ fun ProfilulMeuScreen(onBack: () -> Unit) {
                         InfoRow(label = "Nume", value = user.nume)
                         InfoRow(label = "Email", value = user.username)
                         InfoRow(label = "Telefon", value = user.telefon)
+                    }
+
+                    // Butonul de ștergere (afișat doar când nu edităm)
+                    if (!isEditing) {
+                        Spacer(Modifier.height(32.dp))
+                        OutlinedButton(
+                            onClick = { showDeleteDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
+                        ) {
+                            Text("Șterge Contul")
+                        }
+                    }
+
+// Dialogul de confirmare
+                    if (showDeleteDialog) {
+                        androidx.compose.material3.AlertDialog(
+                            onDismissRequest = {
+                                showDeleteDialog = false
+                                parolaConfirmareInput = ""
+                            },
+                            title = { Text("Ești sigur?") },
+                            text = {
+                                Column {
+                                    Text("Această acțiune este definitivă. Introdu parola pentru a confirma ștergerea contului:")
+                                    Spacer(Modifier.height(16.dp))
+                                    OutlinedTextField(
+                                        value = parolaConfirmareInput,
+                                        onValueChange = { parolaConfirmareInput = it },
+                                        label = { Text("Parola") },
+                                        visualTransformation = PasswordVisualTransformation(),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true
+                                    )
+                                }
+                            },
+                            confirmButton = {
+                                androidx.compose.material3.Button(
+                                    onClick = {
+                                        if (parolaConfirmareInput.isNotBlank()) {
+                                            scope.launch {
+                                                isDeleting = true
+                                                try {
+                                                    // Transmitem parola ca query parameter conform controllerului
+                                                    val response = RetrofitClient.utilizatorService.stergereContUtilizator(parolaConfirmareInput)
+                                                    if (response.code() == 200 || response.isSuccessful) {
+                                                        Toast.makeText(context, "Cont șters.", Toast.LENGTH_SHORT).show()
+                                                        onAccountDeleted()
+
+                                                        //onBack() // Sau navigare către Login
+                                                    } else {
+                                                        Toast.makeText(context, "Parolă incorectă!", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                } catch (e: Exception) {
+//                                                    if (e.message?.contains("lenient") == true) {
+//                                                        onAccountDeleted()
+//                                                    }
+                                                    Toast.makeText(context, "Serverul a intampinat o eroare...", Toast.LENGTH_SHORT).show()
+                                                } finally {
+                                                    isDeleting = false
+                                                    showDeleteDialog = false
+                                                    parolaConfirmareInput = ""
+                                                }
+                                            }
+                                        }
+                                    },
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Color.Red)
+                                ) {
+                                    if (isDeleting) CircularProgressIndicator(Modifier.size(20.dp), color = Color.White)
+                                    else Text("Șterge definitiv", color = Color.White)
+                                }
+                            },
+                            dismissButton = {
+                                androidx.compose.material3.TextButton(onClick = { showDeleteDialog = false }) {
+                                    Text("Anulează")
+                                }
+                            }
+                        )
                     }
                 }
             }

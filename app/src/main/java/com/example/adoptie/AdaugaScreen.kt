@@ -315,7 +315,7 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
 
                             // 2. Pregătim imaginile
                             val imaginiParts = imaginiUris.map { uri ->
-                                val file = context.createTempFileFromUri(uri) // Funcția helper discutată anterior
+                                val file = context.createTempFileFromUri(uri)
                                 val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
                                 MultipartBody.Part.createFormData("imagini", file.name, requestFile)
                             }

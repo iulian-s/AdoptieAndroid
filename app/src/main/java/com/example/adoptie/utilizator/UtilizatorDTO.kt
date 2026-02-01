@@ -7,7 +7,7 @@ data class UtilizatorDTO(
     val nume: String,
     val email: String,
     val rol: Rol,
-    var localitateId: Long,
+    var localitateId: Long? = 1,
     val dataCreare: String,
     val telefon: String,
     val avatar: String? = null,
@@ -20,7 +20,7 @@ enum class Rol {
 
 data class EditareUtilizatorDTO(
     val nume: String,
-    var localitateId: Long = 0,
+    var localitateId: Long? = 1,
     val telefon: String,
     val avatar: String? = null,
     val parolaVeche: String? = null,
