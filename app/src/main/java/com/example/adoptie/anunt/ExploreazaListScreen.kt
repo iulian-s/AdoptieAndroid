@@ -52,6 +52,7 @@ import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import com.example.adoptie.RetrofitClient
 import com.example.adoptie.localitate.LocalitateDTO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -246,12 +247,21 @@ fun ExploreazaListScreen(
                 }
 
                 is AnunturiState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(state.message, color = MaterialTheme.colorScheme.error)
+                    var showError by remember { mutableStateOf(false) }
+                    LaunchedEffect(state) {
+                        showError = false
+                        delay(3000) // 3 secunde întârziere
+                        showError = true
                     }
+                    if(showError){
+                        Box(
+                            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(state.message, color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+
                 }
 
                 is AnunturiState.Success -> {
