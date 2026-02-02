@@ -24,7 +24,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,7 +37,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.adoptie.BASE_URL
+import com.example.adoptie.BASE_IMAGE_URL
 import com.example.adoptie.RetrofitClient
 import com.example.adoptie.anunt.AnuntCard
 import com.example.adoptie.anunt.Stare
@@ -115,11 +114,11 @@ fun ProfilContent(details: ProfilDetails, onNavigateToDetails: (Long) -> Unit, m
             Icon(Icons.Default.ArrowBack, contentDescription = null)
         }
 
-        Text(
-            text = "Detaliile utilizatorului ${user.nume}",
-            modifier = Modifier.align(Alignment.Center),
-            style = MaterialTheme.typography.titleLarge
-        )
+//        Text(
+//            text = user.nume,
+//            modifier = Modifier.align(Alignment.Center),
+//            style = MaterialTheme.typography.titleLarge
+//        )
     }
     LazyColumn (
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)
@@ -129,7 +128,7 @@ fun ProfilContent(details: ProfilDetails, onNavigateToDetails: (Long) -> Unit, m
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
-                val avatarUrl = BASE_URL+ (user.avatar ?: "/imagini/avatar.png")
+                val avatarUrl = BASE_IMAGE_URL+ (user.avatar ?: "/imagini/avatar.png")
                 AsyncImage(
                     model = avatarUrl,
                     contentDescription = "Avatar ${user.username}",

@@ -30,7 +30,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.List
@@ -63,7 +62,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,7 +76,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,8 +88,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.example.adoptie.anunt.AnuntDTO
-import com.example.adoptie.anunt.AnunturiRoutes
-import com.example.adoptie.anunt.DetaliiContent
 import com.example.adoptie.anunt.Gen
 import com.example.adoptie.anunt.ImageCarousel
 import com.example.adoptie.anunt.Stare
@@ -590,7 +585,7 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = nume.isNotBlank() && email.isNotBlank() && parola == confirmaParola  && email.contains("@")// Validare de bază
+                enabled = nume.isNotBlank() && email.isNotBlank() && parola == confirmaParola  && email.contains("@") && parola.isNotBlank()// Validare de bază
             ) {
                 Text("Înregistrează-te")
             }
@@ -672,7 +667,7 @@ fun AnuntPropriuItem(
     onDetailClick: (Long) -> Unit
 ) {
     val imageUrl = if(anunt.listaImagini.isNotEmpty()){
-        BASE_URL + anunt.listaImagini.first()
+        BASE_IMAGE_URL + anunt.listaImagini.first()
     }
     else{
         null

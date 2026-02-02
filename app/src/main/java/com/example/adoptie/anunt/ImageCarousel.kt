@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.adoptie.BASE_URL
+import com.example.adoptie.BASE_IMAGE_URL
 
 @Composable
 fun ImageCarousel(imageUrls: List<String>) {
@@ -39,7 +39,7 @@ fun ImageCarousel(imageUrls: List<String>) {
                 .fillMaxWidth()
                 .aspectRatio(1.5f)
         ) { page ->
-            val imageUrl = BASE_URL + imageUrls[page]
+            val imageUrl = BASE_IMAGE_URL + imageUrls[page]
 
             val imageModifier = Modifier
                 .fillMaxWidth()

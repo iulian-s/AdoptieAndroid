@@ -5,11 +5,9 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -57,7 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.adoptie.BASE_URL
+import com.example.adoptie.BASE_IMAGE_URL
 import com.example.adoptie.RetrofitClient
 import com.example.adoptie.localitate.LocalitateDTO
 import com.google.gson.Gson
@@ -67,7 +64,6 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
-import java.nio.file.WatchEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -178,7 +174,7 @@ fun ProfilulMeuScreen(
 
                     // Secțiune Avatar
                     Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                        val avatarUrl = BASE_URL + (user.avatar ?: "/imagini/avatar.png")
+                        val avatarUrl = BASE_IMAGE_URL + (user.avatar ?: "/imagini/avatar.png")
                         AsyncImage(
                             model = selectedImageUri ?: avatarUrl,
                             contentDescription = null,

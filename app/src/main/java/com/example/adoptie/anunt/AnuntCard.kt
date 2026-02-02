@@ -21,14 +21,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.adoptie.BASE_URL
+import com.example.adoptie.BASE_IMAGE_URL
 import com.example.adoptie.formatRelativeDate
 
 @Composable
 fun AnuntCard(anunt: AnuntDTO, onCardClick: () -> Unit) {
 
     val imageUrl = if(anunt.listaImagini.isNotEmpty()){
-        BASE_URL + anunt.listaImagini.first()
+        BASE_IMAGE_URL + anunt.listaImagini.first()
     }
     else{
         null
