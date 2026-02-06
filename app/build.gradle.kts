@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,6 +10,12 @@ plugins {
 android {
     namespace = "com.example.adoptie"
     compileSdk = 36
+    val localProperties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+
+    if (localPropertiesFile.exists()) {
+        localProperties.load(localPropertiesFile.inputStream())
+    }
 
     defaultConfig {
         applicationId = "com.example.adoptie"
@@ -17,6 +25,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "BACKEND_URL",
+            "\"${localProperties["BACKEND_URL"]}\""
+        )
+
+        buildConfigField(
+            "String",
+            "PIC_URL",
+            "\"${localProperties["PIC_URL"]}\""
+        )
     }
 
     buildTypes {
@@ -37,6 +57,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
