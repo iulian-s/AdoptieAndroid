@@ -56,7 +56,7 @@ android {
     signingConfigs {
         create("release") {
             // Folosim variabilele de mediu injectate de GitHub Actions
-            storeFile = file("release.jks")
+            storeFile = file("$rootDir/app/release.jks")
             storePassword = System.getenv("KEY_STORE_PASSWORD")
             keyAlias = System.getenv("ALIAS")
             keyPassword = System.getenv("KEY_PASSWORD")
