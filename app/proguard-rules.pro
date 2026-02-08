@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep class com.example.adoptie.** { *; }
+-keepattributes Signature, InnerClasses, EnclosingMethod
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
