@@ -626,37 +626,39 @@ fun AnunturileMeleScreen(
                 Text("Nu ai postat niciun anunț încă.")
             }
         } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier.align(Alignment.TopStart)
+            Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 16.dp)
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = null)
-                }
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    ) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    }
 
-                Text(
-                    text = "Anunturile mele",
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-
-            LazyColumn(modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()) {
-                items(anunturi) { anunt ->
-                    AnuntPropriuItem(
-                        anunt,
-                        onDetailClick = { id ->
-                            println("Click pe anunțul: $id")
-                            onNavigateToDetail(id) }
+                    Text(
+                        text = "Anunturile mele",
+                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.titleLarge
                     )
                 }
+
+                LazyColumn(modifier = Modifier
+                    .fillMaxSize()) {
+                    items(anunturi) { anunt ->
+                        AnuntPropriuItem(
+                            anunt,
+                            onDetailClick = { id ->
+                                println("Click pe anunțul: $id")
+                                onNavigateToDetail(id) }
+                        )
+                    }
+                }
             }
+
         }
     }
 }
