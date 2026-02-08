@@ -68,6 +68,8 @@ android {
             storePassword = System.getenv("RELEASE_STORE_PASSWORD")
             keyAlias = System.getenv("RELEASE_KEY_ALIAS")
             keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 
