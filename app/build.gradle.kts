@@ -65,9 +65,9 @@ android {
         create("release") {
             // Folosim variabilele de mediu injectate de GitHub Actions
             storeFile = file("release.jks")
-            storePassword = System.getenv("KEY_STORE_PASSWORD")
-            keyAlias = System.getenv("ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
+            storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
             enableV1Signing = true
             enableV2Signing = true
         }

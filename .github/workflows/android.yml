@@ -40,7 +40,7 @@ jobs:
           name: Release v1.0.${{ github.run_number }}
           files: app/build/outputs/apk/release/app-release.apk
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GIT }}
 
       - name: Check Keystore Size
         run: ls -lh app/release.jks
