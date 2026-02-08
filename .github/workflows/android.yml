@@ -29,9 +29,9 @@ jobs:
         run: ./gradlew assembleRelease
         env:
           RELEASE_STORE_FILE: release.jks
-          RELEASE_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
