@@ -62,21 +62,24 @@ android {
     }
 
     signingConfigs {
-        release{
-            if (System.getenv("RELEASE_STORE_PASSWORD") != null) {
-                storeFile = file("release.jks")
-                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
-                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
-                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
-            }
+        create("release") {
+            // Folosim variabilele de mediu injectate de GitHub Actions
+            storeFile = file("release.jks")
+            storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
         }
     }
 
     buildTypes {
-        release {
-            signingConfig signingConfigs.release
-                    minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
