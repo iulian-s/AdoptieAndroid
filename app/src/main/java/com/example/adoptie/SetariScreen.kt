@@ -905,11 +905,11 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 }
 
                 // TITLE
-                Text(
-                    text = "Anunt",
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.titleLarge
-                )
+//                Text(
+//                    text = "Anunt",
+//                    modifier = Modifier.align(Alignment.Center),
+//                    style = MaterialTheme.typography.titleLarge
+//                )
 
                 // EDIT / SAVE
                 if(editStare != Stare.NEVERIFICAT){
