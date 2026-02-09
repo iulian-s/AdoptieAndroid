@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 
 
 const val BASE_IMAGE_URL = BuildConfig.PIC_URL
-const val BASE_URL = "https://iulian-s-adoptie.hf.space"
+const val BASE_URL = BuildConfig.BACKEND_URL
 object RetrofitClient {
     private var tokenManager: TokenManager? = null
 
