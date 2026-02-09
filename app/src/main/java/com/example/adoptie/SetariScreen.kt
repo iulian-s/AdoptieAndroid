@@ -647,11 +647,19 @@ fun AnunturileMeleScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp, vertical = 16.dp)
                 ) {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.align(Alignment.CenterStart)
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .minimumInteractiveComponentSize() // Asigură pragul de 48dp
+                            .clip(RoundedCornerShape(50)) // Ripple circular
+                            .clickable(onClick = onBack)
+                            .padding(12.dp) // Mărește zona activă în interiorul componentei
                     ) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
 
                     Text(
@@ -921,11 +929,19 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     .padding(16.dp)
             ) {
                 // BACK
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier.align(Alignment.TopStart).minimumInteractiveComponentSize()
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .minimumInteractiveComponentSize() // Asigură pragul de 48dp
+                        .clip(RoundedCornerShape(50)) // Ripple circular
+                        .clickable(onClick = onBack)
+                        .padding(12.dp) // Mărește zona activă în interiorul componentei
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
 
@@ -938,22 +954,23 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
 
                 // EDIT / SAVE
                 if (editStare != Stare.NEVERIFICAT) {
-                    TextButton(
-                        onClick = {
-                            if (isEditing) {
-                                if (imaginiNoiUris.isNotEmpty()) {
-                                    showBackupWarning = true
-                                } else {
-                                    executaSalvareaAnuntului()
-                                }
-                            } else {
-                                isEditing = true
-                            }
-                        },
+                    Box(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .minimumInteractiveComponentSize(), // Aliniere în bara ta custom
-                        enabled = !isEditing || isDataValid
+                            .clip(RoundedCornerShape(8.dp)) // Rotunjim colțurile pentru ripple effect
+                            .clickable(
+                                enabled = !isEditing || isDataValid,
+                                onClick = {
+                                    if (isEditing) {
+                                        if (imaginiNoiUris.isNotEmpty()) showBackupWarning = true
+                                        else executaSalvareaAnuntului()
+                                    } else {
+                                        isEditing = true
+                                    }
+                                }
+                            )
+                            .padding(horizontal = 12.dp, vertical = 8.dp) // ACESTA mărește zona de coliziune
+                            .minimumInteractiveComponentSize() // Garantează minim 48x48dp conform standardelor Android
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
