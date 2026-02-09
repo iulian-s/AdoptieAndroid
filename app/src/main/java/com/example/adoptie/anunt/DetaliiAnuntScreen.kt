@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -20,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -100,7 +102,7 @@ fun DetaliiContent(
             modifier = Modifier.align(Alignment.TopStart)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = null)
+            Icon(Icons.Default.ArrowBack, contentDescription = null, modifier = Modifier.minimumInteractiveComponentSize())
         }
 
         Text(

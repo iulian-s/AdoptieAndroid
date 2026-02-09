@@ -61,6 +61,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -922,7 +923,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 // BACK
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier.align(Alignment.TopStart)
+                    modifier = Modifier.align(Alignment.TopStart).minimumInteractiveComponentSize()
                 ) {
                     Icon(Icons.Default.ArrowBack, contentDescription = null)
                 }
@@ -949,7 +950,9 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                                 isEditing = true
                             }
                         },
-                        modifier = Modifier.align(Alignment.CenterEnd), // Aliniere în bara ta custom
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .minimumInteractiveComponentSize(), // Aliniere în bara ta custom
                         enabled = !isEditing || isDataValid
                     ) {
                         Row(
@@ -959,7 +962,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                             Icon(
                                 imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(24.dp),
                                 tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
                             )
                             Text(
