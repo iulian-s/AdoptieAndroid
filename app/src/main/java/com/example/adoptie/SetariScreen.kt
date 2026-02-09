@@ -647,19 +647,11 @@ fun AnunturileMeleScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp, vertical = 16.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .minimumInteractiveComponentSize() // Asigură pragul de 48dp
-                            .clip(RoundedCornerShape(50)) // Ripple circular
-                            .clickable(onClick = onBack)
-                            .padding(12.dp) // Mărește zona activă în interiorul componentei
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.align(Alignment.CenterStart).minimumInteractiveComponentSize()
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = null)
                     }
 
                     Text(
