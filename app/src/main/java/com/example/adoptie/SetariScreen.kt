@@ -904,6 +904,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     Icon(Icons.Default.ArrowBack, contentDescription = null)
                 }
 
+
                 // TITLE
 //                Text(
 //                    text = "Anunt",
