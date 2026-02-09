@@ -93,11 +93,12 @@ fun DetaliiContent(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(0.dp)
     ) {
         IconButton(
             onClick = onBack,
             modifier = Modifier.align(Alignment.TopStart)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Icon(Icons.Default.ArrowBack, contentDescription = null)
         }
@@ -107,41 +108,43 @@ fun DetaliiContent(
             modifier = Modifier.align(Alignment.Center),
             style = MaterialTheme.typography.titleLarge
         )
-    }
-    LazyColumn(
-        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)
-    ) {
-        item{
-            ImageCarousel(imageUrls = anunt.listaImagini)
-            Spacer(Modifier.height(16.dp))
-            Text(anunt.titlu, fontFamily = FontFamily.SansSerif, fontSize = 26.sp, fontWeight = FontWeight.W400)
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                thickness = 1.dp,
-                color = Color.Gray
-            )
-            Text(anunt.descriere,fontFamily = FontFamily.SansSerif, fontSize = 18.sp, fontWeight = FontWeight.Normal )
-            Spacer(Modifier.height(8.dp))
-        }
-        item {
-            Text("Specie: ${anunt.specie}", style = MaterialTheme.typography.bodyLarge)
-            Text("Rasă: ${anunt.rasa}", style = MaterialTheme.typography.bodyLarge)
-            Text("Gen: ${anunt.gen.name.lowercase()}", style = MaterialTheme.typography.bodyLarge)
-            Text("Vârstă: ${anunt.varsta.display}", style = MaterialTheme.typography.bodyLarge)
-            if(isEditable){
-                Text("Stare: ${anunt.stare}", style = MaterialTheme.typography.bodyLarge)
-            }
-            Spacer(Modifier.height(16.dp))
-        }
-        if (!isEditable && user != null && localitate != null && onNavigateToProfile != null) {
-            item {
-                UtilizatorCard(
-                    user = user,
-                    localitate = localitate,
-                    onCardClick = { onNavigateToProfile(user.id) }
+        LazyColumn(
+            modifier = modifier.fillMaxSize()
+                .padding(horizontal = 16.dp)
+        ) {
+            item{
+                ImageCarousel(imageUrls = anunt.listaImagini)
+                Spacer(Modifier.height(16.dp))
+                Text(anunt.titlu, fontFamily = FontFamily.SansSerif, fontSize = 26.sp, fontWeight = FontWeight.W400)
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    thickness = 1.dp,
+                    color = Color.Gray
                 )
+                Text(anunt.descriere,fontFamily = FontFamily.SansSerif, fontSize = 18.sp, fontWeight = FontWeight.Normal )
+                Spacer(Modifier.height(8.dp))
             }
-        }
+            item {
+                Text("Specie: ${anunt.specie}", style = MaterialTheme.typography.bodyLarge)
+                Text("Rasă: ${anunt.rasa}", style = MaterialTheme.typography.bodyLarge)
+                Text("Gen: ${anunt.gen.name.lowercase()}", style = MaterialTheme.typography.bodyLarge)
+                Text("Vârstă: ${anunt.varsta.display}", style = MaterialTheme.typography.bodyLarge)
+                if(isEditable){
+                    Text("Stare: ${anunt.stare}", style = MaterialTheme.typography.bodyLarge)
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+            if (!isEditable && user != null && localitate != null && onNavigateToProfile != null) {
+                item {
+                    UtilizatorCard(
+                        user = user,
+                        localitate = localitate,
+                        onCardClick = { onNavigateToProfile(user.id) }
+                    )
+                }
+            }
 
+        }
     }
+
 }

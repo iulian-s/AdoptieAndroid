@@ -971,6 +971,9 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     }
                 }
 
+
+
+
             }
         }
 
@@ -984,6 +987,8 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+
+            Text(modifier = Modifier.size(6.dp), text = "")
 
             if (!isLoading) {
                 ImageCarousel(imageUrls = anunt?.listaImagini ?: emptyList())
