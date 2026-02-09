@@ -77,6 +77,11 @@ android {
                 "proguard-rules.pro"
             )
         }
+
+        getByName("debug"){
+            buildConfigField("String", "BASE_URL", "\"${System.getenv("BACKEND_URL")}\"")
+            buildConfigField("String", "BASE_IMAGE_URL", "\"${System.getenv("PIC_URL")}\"")
+        }
     }
 }
 
