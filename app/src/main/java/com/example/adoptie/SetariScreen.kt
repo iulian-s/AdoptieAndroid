@@ -808,7 +808,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
     var imaginiNoiUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
     val multiplePhotoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 5)
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3)
     ) { uris -> imaginiNoiUris = uris }
 
     var showBackupWarning by remember { mutableStateOf(false) }
