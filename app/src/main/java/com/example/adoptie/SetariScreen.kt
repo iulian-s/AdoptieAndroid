@@ -649,7 +649,7 @@ fun AnunturileMeleScreen(
                 ) {
                     IconButton(
                         onClick = onBack,
-                        modifier = Modifier.align(Alignment.CenterStart).minimumInteractiveComponentSize()
+                        modifier = Modifier.align(Alignment.CenterStart)
                     ) {
                         Icon(Icons.Default.ArrowBack, contentDescription = null)
                     }
@@ -921,17 +921,15 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     .padding(16.dp)
             ) {
                 // BACK
-                Box(
+                IconButton(
+                    onClick = onBack,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .minimumInteractiveComponentSize() // Asigură pragul de 48dp
-                        .clip(RoundedCornerShape(50)) // Ripple circular
-                        .clickable(onClick = onBack)
-                        .padding(12.dp) // Mărește zona activă în interiorul componentei
+                        .minimumInteractiveComponentSize()
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
-                        contentDescription = null,
+                        contentDescription = "Înapoi",
                         modifier = Modifier.size(24.dp)
                     )
                 }
