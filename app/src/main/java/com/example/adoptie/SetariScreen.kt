@@ -929,7 +929,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Înapoi",
+                        contentDescription = "Inapoi",
                         modifier = Modifier.size(24.dp)
                     )
                 }
