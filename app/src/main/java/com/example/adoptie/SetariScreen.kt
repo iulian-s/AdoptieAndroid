@@ -175,9 +175,6 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
                     onBack = { setariNavController.popBackStack() },
                     onLoginSuccess = {
                         isLoggedIn = true
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Bine ai venit!")
-                        }
                         // Curățăm stiva de navigare și mergem la "Main" sau un ecran de Profil
                         setariNavController.navigate(SetariRoutes.Main.route) {
                             popUpTo(SetariRoutes.Login.route) { inclusive = true }
@@ -582,7 +579,7 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                                 val body = response.body()
                                 body?.token?.let { token ->
                                     tokenManager.saveToken(token)
-                                    snackbarHostState.showSnackbar("Bine ai venit, $nume!")
+                                    //snackbarHostState.showSnackbar("Bine ai venit, $nume!")
                                     onRegisterSuccess() // Folosește callback-ul tău de succes
                                 }
                             } else {
@@ -940,7 +937,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
 
                 // EDIT / SAVE
                 if (editStare != Stare.NEVERIFICAT) {
-                    IconButton(
+                    TextButton(
                         onClick = {
                             if (isEditing) {
                                 if (imaginiNoiUris.isNotEmpty()) {
@@ -952,14 +949,25 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                                 isEditing = true
                             }
                         },
-                        modifier = Modifier.align(Alignment.TopEnd),
+                        modifier = Modifier.align(Alignment.CenterEnd), // Aliniere în bara ta custom
                         enabled = !isEditing || isDataValid
                     ) {
-                        Icon(
-                            imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                            contentDescription = if (isEditing) "Salvează" else "Editează",
-                            tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp) // Spațiu mic între icon și text
+                        ) {
+                            Icon(
+                                imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
+                            )
+                            Text(
+                                text = if (isEditing) "Salvare" else "Editare",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
+                            )
+                        }
                     }
                 }
 

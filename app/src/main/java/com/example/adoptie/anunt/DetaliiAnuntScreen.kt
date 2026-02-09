@@ -102,11 +102,11 @@ fun DetaliiContent(
             Icon(Icons.Default.ArrowBack, contentDescription = null)
         }
 
-//        Text(
-//            text = "Detalii Anunt",
-//            modifier = Modifier.align(Alignment.Center),
-//            style = MaterialTheme.typography.titleLarge
-//        )
+        Text(
+            text = " ",
+            modifier = Modifier.align(Alignment.Center),
+            style = MaterialTheme.typography.titleLarge
+        )
     }
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)
