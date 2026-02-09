@@ -67,6 +67,8 @@ android {
 
     buildTypes {
         getByName("release") {
+            buildConfigField("String", "BASE_URL", "\"${System.getenv("BACKEND_URL")}\"")
+            buildConfigField("String", "BASE_IMAGE_URL", "\"${System.getenv("PIC_URL")}\"")
             signingConfig = signingConfigs.getByName("release")
             isShrinkResources = false
             isMinifyEnabled = false
