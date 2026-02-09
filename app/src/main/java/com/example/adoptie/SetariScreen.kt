@@ -1,7 +1,6 @@
 package com.example.adoptie
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.List
@@ -55,6 +55,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -79,6 +81,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -98,6 +101,7 @@ import com.example.adoptie.localitate.LocalitateDTO
 import com.example.adoptie.utilizator.ProfilulMeuScreen
 import com.example.adoptie.utilizator.createTempFileFromUri
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -126,100 +130,110 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
     var isLoggedIn by remember {
         mutableStateOf(tokenManager.getToken() != null)
     }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         onProfileNavControllerReady(setariNavController)
     }
 
-    NavHost(
-        navController = setariNavController,
-        startDestination = SetariRoutes.Main.route
-    ) {
-        // Pagina principală de Setări
-        composable(SetariRoutes.Main.route) {
-            LaunchedEffect(isLoggedIn) {
-                if (!isLoggedIn) {
-                    // Putem lăsa utilizatorul pe pagina de "Intră în cont"
-                    // sau să îl trimitem automat la ecranul de Login
-                     setariNavController.navigate(SetariRoutes.Login.route)
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { padding ->
+        NavHost(
+            navController = setariNavController,
+            startDestination = SetariRoutes.Main.route,
+            modifier = Modifier.padding(padding)
+        ) {
+            // Pagina principală de Setări
+            composable(SetariRoutes.Main.route) {
+                LaunchedEffect(isLoggedIn) {
+                    if (!isLoggedIn) {
+                        // Putem lăsa utilizatorul pe pagina de "Intră în cont"
+                        // sau să îl trimitem automat la ecranul de Login
+                        setariNavController.navigate(SetariRoutes.Login.route)
+                    }
                 }
+                SetariMainContent(
+                    isLoggedIn = isLoggedIn,
+                    onNavigateToLogin = { setariNavController.navigate(SetariRoutes.Login.route) },
+                    onLogout = {
+                        isLoggedIn = false // Actualizăm starea pentru a schimba UI-ul instant
+                        tokenManager.deleteToken()
+
+                    },
+                    onNavigateToProfil = { setariNavController.navigate(SetariRoutes.ProfilulMeu.route) },
+                    onNavigateToAnunturi = { setariNavController.navigate(SetariRoutes.AnunturileMele.route) },
+                )
             }
-            SetariMainContent(
-                isLoggedIn = isLoggedIn,
-                onNavigateToLogin = { setariNavController.navigate(SetariRoutes.Login.route) },
-                onLogout = {
-                    isLoggedIn = false // Actualizăm starea pentru a schimba UI-ul instant
-                    tokenManager.deleteToken()
 
-                },
-                onNavigateToProfil = { setariNavController.navigate(SetariRoutes.ProfilulMeu.route) },
-                onNavigateToAnunturi = { setariNavController.navigate(SetariRoutes.AnunturileMele.route) },
-            )
-        }
-
-        // Pagina de Login
-        composable(SetariRoutes.Login.route) {
-            LoginScreen(
-                navController = setariNavController,
-                onNavigateToRegister = { setariNavController.navigate(SetariRoutes.Register.route) },
-                onBack = { setariNavController.popBackStack() },
-                onLoginSuccess = {
-                    isLoggedIn = true
-                    // Curățăm stiva de navigare și mergem la "Main" sau un ecran de Profil
-                    setariNavController.navigate(SetariRoutes.Main.route) {
-                        popUpTo(SetariRoutes.Login.route) { inclusive = true }
+            // Pagina de Login
+            composable(SetariRoutes.Login.route) {
+                LoginScreen(
+                    navController = setariNavController,
+                    onNavigateToRegister = { setariNavController.navigate(SetariRoutes.Register.route) },
+                    onBack = { setariNavController.popBackStack() },
+                    onLoginSuccess = {
+                        isLoggedIn = true
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Bine ai venit!")
+                        }
+                        // Curățăm stiva de navigare și mergem la "Main" sau un ecran de Profil
+                        setariNavController.navigate(SetariRoutes.Main.route) {
+                            popUpTo(SetariRoutes.Login.route) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        // Pagina de Register
-        composable(SetariRoutes.Register.route) {
-            RegisterScreen(
-                onBack = { setariNavController.popBackStack() },
-                onRegisterSuccess = {
-                    isLoggedIn = true
-                    setariNavController.navigate(SetariRoutes.Main.route) {
-                        popUpTo(SetariRoutes.Register.route) { inclusive = true }
+            // Pagina de Register
+            composable(SetariRoutes.Register.route) {
+                RegisterScreen(
+                    onBack = { setariNavController.popBackStack() },
+                    onRegisterSuccess = {
+                        isLoggedIn = true
+                        setariNavController.navigate(SetariRoutes.Main.route) {
+                            popUpTo(SetariRoutes.Register.route) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        composable(SetariRoutes.ProfilulMeu.route) {
-            ProfilulMeuScreen(
-                onBack = { setariNavController.popBackStack() },
-                onAccountDeleted = {
-                    isLoggedIn = false
-                    tokenManager.deleteToken()
-                    setariNavController.navigate(SetariRoutes.Main.route){
-                        popUpTo(0){inclusive = true}
+            composable(SetariRoutes.ProfilulMeu.route) {
+                ProfilulMeuScreen(
+                    onBack = { setariNavController.popBackStack() },
+                    onAccountDeleted = {
+                        isLoggedIn = false
+                        tokenManager.deleteToken()
+                        setariNavController.navigate(SetariRoutes.Main.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
 
 
-        composable(SetariRoutes.AnunturileMele.route) {
-            AnunturileMeleScreen(
-                onBack = { setariNavController.popBackStack() },
-                onNavigateToDetail = { id ->
-                    setariNavController.navigate(SetariRoutes.DetaliiAnuntPropriu.createRoute(id))
-                }
-            )
-        }
+            composable(SetariRoutes.AnunturileMele.route) {
+                AnunturileMeleScreen(
+                    onBack = { setariNavController.popBackStack() },
+                    onNavigateToDetail = { id ->
+                        setariNavController.navigate(SetariRoutes.DetaliiAnuntPropriu.createRoute(id))
+                    }
+                )
+            }
 
-        composable(
-            route = SetariRoutes.DetaliiAnuntPropriu.route,
-            arguments = listOf(navArgument("anuntId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getLong("anuntId") ?: 0L
-            // Aici chemăm noul ecran pe care îl vom crea
-            AnuntPropriuDetaliiScreen(
-                anuntId = id,
-                onBack = { setariNavController.popBackStack() }
-            )
+            composable(
+                route = SetariRoutes.DetaliiAnuntPropriu.route,
+                arguments = listOf(navArgument("anuntId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getLong("anuntId") ?: 0L
+                // Aici chemăm noul ecran pe care îl vom crea
+                AnuntPropriuDetaliiScreen(
+                    anuntId = id,
+                    onBack = { setariNavController.popBackStack() }
+                )
+            }
         }
     }
 
@@ -419,7 +433,7 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-
+    val snackbarHostState = remember { SnackbarHostState() }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -432,7 +446,8 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -567,7 +582,7 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                                 val body = response.body()
                                 body?.token?.let { token ->
                                     tokenManager.saveToken(token)
-                                    Toast.makeText(context, "Bine ai venit, $nume!", Toast.LENGTH_LONG).show()
+                                    snackbarHostState.showSnackbar("Bine ai venit, $nume!")
                                     onRegisterSuccess() // Folosește callback-ul tău de succes
                                 }
                             } else {
@@ -799,6 +814,8 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
     var showBackupWarning by remember { mutableStateOf(false) }
 
     var isSaving by remember { mutableStateOf(false) }
+    var isSuccess by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(anuntId) {
         try {
@@ -849,6 +866,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
 
     fun executaSalvareaAnuntului() {
         isSaving = true
+        isSuccess = false
         scope.launch {
             try {
                 val updatedDto = anunt!!.copy(
@@ -875,11 +893,13 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 if (response.isSuccessful) {
                     anunt = response.body()
                     imaginiNoiUris = emptyList()
+                    isSuccess = true
+                    delay(2000)
                     isEditing = false
-                    Toast.makeText(context, "Anunt actualizat cu succes!", Toast.LENGTH_SHORT).show()
+
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Eroare la actualizare, va rugam incercati mai tarziu!", Toast.LENGTH_SHORT).show()
+                snackbarHostState.showSnackbar("Eroare la actualizare, va rugam incercati mai tarziu!")
                 println(e.message)
             }
             finally {
@@ -888,7 +908,9 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
         }
     }
 
-    Scaffold(){ padding ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ){ padding ->
         if (isLoading) { /* CircularProgressIndicator */ }
         else {
             Box(
@@ -1111,17 +1133,33 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
 
             }
         if (isSaving) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
-                    .clickable(enabled = false) { }, // Blocăm click-urile
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Se actualizeaza informatiile...", color = Color.Black)
+            Dialog(onDismissRequest = { }) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFF5F5F5),
+                    tonalElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (!isSuccess) {
+                            // Starea de încărcare
+                            CircularProgressIndicator(strokeWidth = 3.dp)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Se actualizeaza informatiile...", color = Color.DarkGray)
+                        } else {
+                            // Starea de succes
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Color(0xFF4CAF50), // Verde
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Anunt actualizat cu succes!", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }
