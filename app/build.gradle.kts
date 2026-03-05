@@ -27,24 +27,17 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-//        buildConfigField(
-//            "String",
-//            "BACKEND_URL",
-//            "\"${localProperties["BACKEND_URL"]}\""
-//        )
-//
-//        buildConfigField(
-//            "String",
-//            "PIC_URL",
-//            "\"${localProperties["PIC_URL"]}\""
-//        )
+        buildConfigField(
+            "String",
+            "BACKEND_URL",
+            "\"${localProperties["BACKEND_URL"]}\""
+        )
 
-        val backendUrl = System.getenv("BACKEND_URL") ?: "https://fallback-url.com/"
-        val picUrl = System.getenv("PIC_URL") ?: "https://fallback-url.com/"
-
-        buildConfigField("String", "BACKEND_URL", "\"$backendUrl\"")
-        buildConfigField("String", "PIC_URL", "\"$picUrl\"")
-
+        buildConfigField(
+            "String",
+            "PIC_URL",
+            "\"${localProperties["PIC_URL"]}\""
+        )
     }
 
 
@@ -73,8 +66,6 @@ android {
 
     buildTypes {
         getByName("release") {
-//            buildConfigField("String", "BASE_URL", "\"${System.getenv("BACKEND_URL")}\"")
-//            buildConfigField("String", "BASE_IMAGE_URL", "\"${System.getenv("PIC_URL")}\"")
             signingConfig = signingConfigs.getByName("release")
             isShrinkResources = false
             isMinifyEnabled = false
@@ -82,11 +73,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-        }
-
-        getByName("debug"){
-//            buildConfigField("String", "BASE_URL", "\"${System.getenv("BACKEND_URL")}\"")
-//            buildConfigField("String", "BASE_IMAGE_URL", "\"${System.getenv("PIC_URL")}\"")
         }
     }
 }
