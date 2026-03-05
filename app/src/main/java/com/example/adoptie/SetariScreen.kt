@@ -1,7 +1,6 @@
 package com.example.adoptie
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.List
@@ -55,10 +55,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -79,6 +82,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -98,6 +102,7 @@ import com.example.adoptie.localitate.LocalitateDTO
 import com.example.adoptie.utilizator.ProfilulMeuScreen
 import com.example.adoptie.utilizator.createTempFileFromUri
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -126,100 +131,107 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
     var isLoggedIn by remember {
         mutableStateOf(tokenManager.getToken() != null)
     }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         onProfileNavControllerReady(setariNavController)
     }
 
-    NavHost(
-        navController = setariNavController,
-        startDestination = SetariRoutes.Main.route
-    ) {
-        // Pagina principală de Setări
-        composable(SetariRoutes.Main.route) {
-            LaunchedEffect(isLoggedIn) {
-                if (!isLoggedIn) {
-                    // Putem lăsa utilizatorul pe pagina de "Intră în cont"
-                    // sau să îl trimitem automat la ecranul de Login
-                     setariNavController.navigate(SetariRoutes.Login.route)
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { padding ->
+        NavHost(
+            navController = setariNavController,
+            startDestination = SetariRoutes.Main.route,
+            modifier = Modifier.padding(0.dp)
+        ) {
+            // Pagina principală de Setări
+            composable(SetariRoutes.Main.route) {
+                LaunchedEffect(isLoggedIn) {
+                    if (!isLoggedIn) {
+                        // Putem lăsa utilizatorul pe pagina de "Intră în cont"
+                        // sau să îl trimitem automat la ecranul de Login
+                        setariNavController.navigate(SetariRoutes.Login.route)
+                    }
                 }
+                SetariMainContent(
+                    isLoggedIn = isLoggedIn,
+                    onNavigateToLogin = { setariNavController.navigate(SetariRoutes.Login.route) },
+                    onLogout = {
+                        isLoggedIn = false // Actualizăm starea pentru a schimba UI-ul instant
+                        tokenManager.deleteToken()
+
+                    },
+                    onNavigateToProfil = { setariNavController.navigate(SetariRoutes.ProfilulMeu.route) },
+                    onNavigateToAnunturi = { setariNavController.navigate(SetariRoutes.AnunturileMele.route) },
+                )
             }
-            SetariMainContent(
-                isLoggedIn = isLoggedIn,
-                onNavigateToLogin = { setariNavController.navigate(SetariRoutes.Login.route) },
-                onLogout = {
-                    isLoggedIn = false // Actualizăm starea pentru a schimba UI-ul instant
-                    tokenManager.deleteToken()
 
-                },
-                onNavigateToProfil = { setariNavController.navigate(SetariRoutes.ProfilulMeu.route) },
-                onNavigateToAnunturi = { setariNavController.navigate(SetariRoutes.AnunturileMele.route) },
-            )
-        }
-
-        // Pagina de Login
-        composable(SetariRoutes.Login.route) {
-            LoginScreen(
-                navController = setariNavController,
-                onNavigateToRegister = { setariNavController.navigate(SetariRoutes.Register.route) },
-                onBack = { setariNavController.popBackStack() },
-                onLoginSuccess = {
-                    isLoggedIn = true
-                    // Curățăm stiva de navigare și mergem la "Main" sau un ecran de Profil
-                    setariNavController.navigate(SetariRoutes.Main.route) {
-                        popUpTo(SetariRoutes.Login.route) { inclusive = true }
+            // Pagina de Login
+            composable(SetariRoutes.Login.route) {
+                LoginScreen(
+                    navController = setariNavController,
+                    onNavigateToRegister = { setariNavController.navigate(SetariRoutes.Register.route) },
+                    onBack = { setariNavController.popBackStack() },
+                    onLoginSuccess = {
+                        isLoggedIn = true
+                        // Curățăm stiva de navigare și mergem la "Main" sau un ecran de Profil
+                        setariNavController.navigate(SetariRoutes.Main.route) {
+                            popUpTo(SetariRoutes.Login.route) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        // Pagina de Register
-        composable(SetariRoutes.Register.route) {
-            RegisterScreen(
-                onBack = { setariNavController.popBackStack() },
-                onRegisterSuccess = {
-                    isLoggedIn = true
-                    setariNavController.navigate(SetariRoutes.Main.route) {
-                        popUpTo(SetariRoutes.Register.route) { inclusive = true }
+            // Pagina de Register
+            composable(SetariRoutes.Register.route) {
+                RegisterScreen(
+                    onBack = { setariNavController.popBackStack() },
+                    onRegisterSuccess = {
+                        isLoggedIn = true
+                        setariNavController.navigate(SetariRoutes.Main.route) {
+                            popUpTo(SetariRoutes.Register.route) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        composable(SetariRoutes.ProfilulMeu.route) {
-            ProfilulMeuScreen(
-                onBack = { setariNavController.popBackStack() },
-                onAccountDeleted = {
-                    isLoggedIn = false
-                    tokenManager.deleteToken()
-                    setariNavController.navigate(SetariRoutes.Main.route){
-                        popUpTo(0){inclusive = true}
+            composable(SetariRoutes.ProfilulMeu.route) {
+                ProfilulMeuScreen(
+                    onBack = { setariNavController.popBackStack() },
+                    onAccountDeleted = {
+                        isLoggedIn = false
+                        tokenManager.deleteToken()
+                        setariNavController.navigate(SetariRoutes.Main.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
 
 
-        composable(SetariRoutes.AnunturileMele.route) {
-            AnunturileMeleScreen(
-                onBack = { setariNavController.popBackStack() },
-                onNavigateToDetail = { id ->
-                    setariNavController.navigate(SetariRoutes.DetaliiAnuntPropriu.createRoute(id))
-                }
-            )
-        }
+            composable(SetariRoutes.AnunturileMele.route) {
+                AnunturileMeleScreen(
+                    onBack = { setariNavController.popBackStack() },
+                    onNavigateToDetail = { id ->
+                        setariNavController.navigate(SetariRoutes.DetaliiAnuntPropriu.createRoute(id))
+                    }
+                )
+            }
 
-        composable(
-            route = SetariRoutes.DetaliiAnuntPropriu.route,
-            arguments = listOf(navArgument("anuntId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getLong("anuntId") ?: 0L
-            // Aici chemăm noul ecran pe care îl vom crea
-            AnuntPropriuDetaliiScreen(
-                anuntId = id,
-                onBack = { setariNavController.popBackStack() }
-            )
+            composable(
+                route = SetariRoutes.DetaliiAnuntPropriu.route,
+                arguments = listOf(navArgument("anuntId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getLong("anuntId") ?: 0L
+                // Aici chemăm noul ecran pe care îl vom crea
+                AnuntPropriuDetaliiScreen(
+                    anuntId = id,
+                    onBack = { setariNavController.popBackStack() }
+                )
+            }
         }
     }
 
@@ -419,7 +431,7 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-
+    val snackbarHostState = remember { SnackbarHostState() }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -432,7 +444,8 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -567,7 +580,7 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                                 val body = response.body()
                                 body?.token?.let { token ->
                                     tokenManager.saveToken(token)
-                                    Toast.makeText(context, "Bine ai venit, $nume!", Toast.LENGTH_LONG).show()
+                                    //snackbarHostState.showSnackbar("Bine ai venit, $nume!")
                                     onRegisterSuccess() // Folosește callback-ul tău de succes
                                 }
                             } else {
@@ -626,7 +639,9 @@ fun AnunturileMeleScreen(
                 Text("Nu ai postat niciun anunț încă.")
             }
         } else {
-            Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            Column(modifier = Modifier
+                .padding(0.dp)
+                .fillMaxSize()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -793,12 +808,14 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
     var imaginiNoiUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
     val multiplePhotoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 5)
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3)
     ) { uris -> imaginiNoiUris = uris }
 
     var showBackupWarning by remember { mutableStateOf(false) }
 
     var isSaving by remember { mutableStateOf(false) }
+    var isSuccess by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(anuntId) {
         try {
@@ -849,6 +866,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
 
     fun executaSalvareaAnuntului() {
         isSaving = true
+        isSuccess = false
         scope.launch {
             try {
                 val updatedDto = anunt!!.copy(
@@ -875,11 +893,13 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 if (response.isSuccessful) {
                     anunt = response.body()
                     imaginiNoiUris = emptyList()
+                    isSuccess = true
+                    delay(2000)
                     isEditing = false
-                    Toast.makeText(context, "Anunt actualizat cu succes!", Toast.LENGTH_SHORT).show()
+
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Eroare la actualizare, va rugam incercati mai tarziu!", Toast.LENGTH_SHORT).show()
+                snackbarHostState.showSnackbar("Eroare la actualizare, va rugam incercati mai tarziu!")
                 println(e.message)
             }
             finally {
@@ -887,10 +907,14 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
             }
         }
     }
-
-    Scaffold(){ padding ->
-        if (isLoading) { /* CircularProgressIndicator */ }
-        else {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        if (isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -899,198 +923,244 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                 // BACK
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier.align(Alignment.TopStart)
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .minimumInteractiveComponentSize()
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Inapoi",
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
+
 
                 // TITLE
-//                Text(
-//                    text = "Anunt",
-//                    modifier = Modifier.align(Alignment.Center),
-//                    style = MaterialTheme.typography.titleLarge
-//                )
+                Text(
+                    text = " ",
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.titleLarge
+                )
 
                 // EDIT / SAVE
-                if(editStare != Stare.NEVERIFICAT){
-                    IconButton(
-                        onClick = {
-                            if (isEditing) {
-                                if (imaginiNoiUris.isNotEmpty()) {
-                                    showBackupWarning = true
-                                } else {
-                                    executaSalvareaAnuntului()
+                if (editStare != Stare.NEVERIFICAT) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .clip(RoundedCornerShape(8.dp)) // Rotunjim colțurile pentru ripple effect
+                            .clickable(
+                                enabled = !isEditing || isDataValid,
+                                onClick = {
+                                    if (isEditing) {
+                                        if (imaginiNoiUris.isNotEmpty()) showBackupWarning = true
+                                        else executaSalvareaAnuntului()
+                                    } else {
+                                        isEditing = true
+                                    }
                                 }
-                            } else {
-                                isEditing = true
-                            }
-                        },
-                        modifier = Modifier.align(Alignment.TopEnd),
-                        enabled = !isEditing || isDataValid
+                            )
+                            .padding(horizontal = 12.dp, vertical = 8.dp) // ACESTA mărește zona de coliziune
+                            .minimumInteractiveComponentSize() // Garantează minim 48x48dp conform standardelor Android
                     ) {
-                        Icon(
-                            imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                            contentDescription = if (isEditing) "Salvează" else "Editează",
-                            tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp) // Spațiu mic între icon și text
+                        ) {
+                            Icon(
+                                imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
+                            )
+                            Text(
+                                text = if (isEditing) "Salvare" else "Editare",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
+                            )
+                        }
                     }
                 }
+
+
+
 
             }
-
         }
 
-            Column(modifier = Modifier
-                .padding(padding)
+
+
+
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)) {
+                .padding(16.dp)
+        ) {
 
+            Text(modifier = Modifier.size(6.dp), text = "")
+
+            if (!isLoading) {
                 ImageCarousel(imageUrls = anunt?.listaImagini ?: emptyList())
-                Spacer(Modifier.height(16.dp))
+            }
+            Spacer(Modifier.height(16.dp))
 
-                if (isEditing) {
-                    Spacer(Modifier.height(8.dp))
-                    Button(
-                        onClick = { multiplePhotoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.AddCircle, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Adaugă imagini noi (${imaginiNoiUris.size})")
-                    }
+            if (isEditing) {
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        multiplePhotoPicker.launch(
+                            PickVisualMediaRequest(
+                                ActivityResultContracts.PickVisualMedia.ImageOnly
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.AddCircle, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Adaugă imagini noi (${imaginiNoiUris.size})")
+                }
 
-                    // Preview poze noi selectate
-                    if (imaginiNoiUris.isNotEmpty()) {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(imaginiNoiUris) { uri ->
-                                AsyncImage(model = uri, contentDescription = null, modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
-                            }
+                // Preview poze noi selectate
+                if (imaginiNoiUris.isNotEmpty()) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(imaginiNoiUris) { uri ->
+                            AsyncImage(
+                                model = uri,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
                         }
                     }
                 }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            if (isEditing) {
+
+                // Câmpuri de editare
+                OutlinedTextField(
+                    value = editTitlu,
+                    onValueChange = { editTitlu = it },
+                    label = { Text("Nume") },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = editTitlu.isBlank(),
+                    supportingText = {
+                        if (editTitlu.isBlank()) Text("Camp obligatoriu", color = Color.Red)
+                    }
+                )
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = editDescriere,
+                    onValueChange = { editDescriere = it },
+                    label = { Text("Descriere") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    isError = editTitlu.isBlank(),
+                    supportingText = {
+                        if (editTitlu.isBlank()) Text("Camp obligatoriu", color = Color.Red)
+                    }
+                )
 
                 Spacer(Modifier.height(16.dp))
+                // 1. Dropdown SPECIE
+                EditDropdown(
+                    label = "Specie",
+                    selectedValue = editSpecie,
+                    options = raseMap.keys.toList(),
+                    optionToString = { it },
+                    onValueChange = {
+                        editSpecie = it
+                        editRasa = raseMap[it]?.firstOrNull()
+                            ?: "" // Resetăm rasa la prima disponibilă din noua specie
+                    },
+                    expanded = expandedSpecie,
+                    onExpandedChange = { expandedSpecie = it }
+                )
 
-                if (isEditing) {
+                // 2. Dropdown RASĂ (depinde de Specie)
+                EditDropdown(
+                    label = "Rasă",
+                    selectedValue = editRasa,
+                    options = raseMap[editSpecie] ?: emptyList(),
+                    optionToString = { it },
+                    onValueChange = { editRasa = it },
+                    expanded = expandedRasa,
+                    onExpandedChange = { expandedRasa = it }
+                )
 
-                    // Câmpuri de editare
-                    OutlinedTextField(
-                        value = editTitlu,
-                        onValueChange = { editTitlu = it },
-                        label = { Text("Nume") },
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = editTitlu.isBlank(),
-                        supportingText = {
-                            if (editTitlu.isBlank()) Text("Camp obligatoriu", color = Color.Red)
-                        }
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = editDescriere,
-                        onValueChange = { editDescriere = it },
-                        label = { Text("Descriere") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                        isError = editTitlu.isBlank(),
-                        supportingText = {
-                            if (editTitlu.isBlank()) Text("Camp obligatoriu", color = Color.Red)
-                        }
-                    )
+                // 3. Dropdown GEN (Enum)
+                EditDropdown(
+                    label = "Gen",
+                    selectedValue = editGen?.name?.lowercase() ?: "",
+                    options = Gen.entries, // Presupunând că ai enum-ul Gen cu entries (Kotlin 1.9+)
+                    optionToString = { it.name.lowercase() },
+                    onValueChange = { editGen = it },
+                    expanded = expandedGen,
+                    onExpandedChange = { expandedGen = it }
+                )
 
-                    Spacer(Modifier.height(16.dp))
-                    // 1. Dropdown SPECIE
+                // 4. Dropdown VÂRSTĂ (Enum)
+                EditDropdown(
+                    label = "Vârstă",
+                    selectedValue = editVarsta?.display ?: "",
+                    options = Varsta.entries,
+                    optionToString = { it.display },
+                    onValueChange = { editVarsta = it },
+                    expanded = expandedVarsta,
+                    onExpandedChange = { expandedVarsta = it }
+                )
+                // 5. Dropdown Stare (Enum)
+
+                EditDropdown(
+                    label = "Stare",
+                    selectedValue = editStare?.name?.lowercase() ?: "",
+                    options = listOf(Stare.ACTIV, Stare.INACTIV),
+                    optionToString = { it.name.lowercase() },
+                    onValueChange = { editStare = it },
+                    expanded = expandedStare,
+                    onExpandedChange = { expandedStare = it }
+                )
+
+
+                //6. Dropdown Judet
+                EditDropdown(
+                    label = "Judet",
+                    selectedValue = editJudet ?: "",
+                    options = listaJudete,
+                    optionToString = { it },
+                    onValueChange = {
+                        editJudet = it
+                        editLocalitate = ""
+                    },
+                    expanded = expandedJudet,
+                    onExpandedChange = { expandedJudet = it }
+                )
+                //6. Dropdown Localitate
+                if (editJudet != null) {
                     EditDropdown(
-                        label = "Specie",
-                        selectedValue = editSpecie,
-                        options = raseMap.keys.toList(),
-                        optionToString = { it },
+                        label = "Localitate",
+                        selectedValue = editLocalitate ?: "",
+                        options = listaOraseByJudet,
+                        optionToString = { it.nume },
                         onValueChange = {
-                            editSpecie = it
-                            editRasa = raseMap[it]?.firstOrNull() ?: "" // Resetăm rasa la prima disponibilă din noua specie
+                            editLocalitate = it.nume
+                            editLocalitateId = it.id
                         },
-                        expanded = expandedSpecie,
-                        onExpandedChange = { expandedSpecie = it }
+                        expanded = expandedLocalitate,
+                        onExpandedChange = { expandedLocalitate = it }
                     )
-
-                    // 2. Dropdown RASĂ (depinde de Specie)
-                    EditDropdown(
-                        label = "Rasă",
-                        selectedValue = editRasa,
-                        options = raseMap[editSpecie] ?: emptyList(),
-                        optionToString = { it },
-                        onValueChange = { editRasa = it },
-                        expanded = expandedRasa,
-                        onExpandedChange = { expandedRasa = it }
-                    )
-
-                    // 3. Dropdown GEN (Enum)
-                    EditDropdown(
-                        label = "Gen",
-                        selectedValue = editGen?.name?.lowercase() ?: "",
-                        options = Gen.entries, // Presupunând că ai enum-ul Gen cu entries (Kotlin 1.9+)
-                        optionToString = { it.name.lowercase() },
-                        onValueChange = { editGen = it },
-                        expanded = expandedGen,
-                        onExpandedChange = { expandedGen = it }
-                    )
-
-                    // 4. Dropdown VÂRSTĂ (Enum)
-                    EditDropdown(
-                        label = "Vârstă",
-                        selectedValue = editVarsta?.display ?: "",
-                        options = Varsta.entries,
-                        optionToString = { it.display },
-                        onValueChange = { editVarsta = it },
-                        expanded = expandedVarsta,
-                        onExpandedChange = { expandedVarsta = it }
-                    )
-                    // 5. Dropdown Stare (Enum)
-
-                    EditDropdown(
-                        label = "Stare",
-                        selectedValue = editStare?.name?.lowercase() ?: "",
-                        options = listOf(Stare.ACTIV, Stare.INACTIV),
-                        optionToString = { it.name.lowercase() },
-                        onValueChange = { editStare = it },
-                        expanded = expandedStare,
-                        onExpandedChange = { expandedStare = it }
-                    )
+                }
 
 
-                    //6. Dropdown Judet
-                    EditDropdown(
-                        label = "Judet",
-                        selectedValue = editJudet ?: "",
-                        options = listaJudete,
-                        optionToString = { it },
-                        onValueChange = {
-                            editJudet = it
-                            editLocalitate = ""
-                                        },
-                        expanded = expandedJudet,
-                        onExpandedChange = { expandedJudet = it }
-                    )
-                    //6. Dropdown Localitate
-                    if(editJudet != null) {
-                        EditDropdown(
-                            label = "Localitate",
-                            selectedValue = editLocalitate ?: "",
-                            options = listaOraseByJudet,
-                            optionToString = { it.nume },
-                            onValueChange = {
-                                editLocalitate = it.nume
-                                editLocalitateId = it.id
-                                            },
-                            expanded = expandedLocalitate,
-                            onExpandedChange = { expandedLocalitate = it }
-                        )
-                    }
-
-
-
-                } else {
-                    // Vizualizare normală (Reutilizăm stilul tău)
+            } else {
+                // Vizualizare normală (Reutilizăm stilul tău)
+                if (!isLoading) {
                     Text(anunt?.titlu ?: "", fontSize = 26.sp, fontWeight = FontWeight.W400)
                     HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     Text(anunt?.descriere ?: "", fontSize = 18.sp)
@@ -1098,29 +1168,57 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     Spacer(Modifier.height(16.dp))
                     Text("Specie: ${anunt?.specie}", style = MaterialTheme.typography.bodyLarge)
                     Text("Rasă: ${anunt?.rasa}", style = MaterialTheme.typography.bodyLarge)
-                    Text("Gen: ${anunt?.gen?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
-                    Text("Varsta: ${anunt?.varsta?.display}", style = MaterialTheme.typography.bodyLarge)
-                    Text("Stare: ${anunt?.stare?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Gen: ${anunt?.gen?.name?.lowercase()?.capitalize()}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        "Varsta: ${anunt?.varsta?.display}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        "Stare: ${anunt?.stare?.name?.lowercase()?.capitalize()}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                     Text(
                         text = "Locatie: ${editLocalitate}, ${editJudet}",
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
 
-
             }
+
+
+        }
+    }
         if (isSaving) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
-                    .clickable(enabled = false) { }, // Blocăm click-urile
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Se actualizeaza informatiile...", color = Color.Black)
+            Dialog(onDismissRequest = { }) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFF5F5F5),
+                    tonalElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (!isSuccess) {
+                            // Starea de încărcare
+                            CircularProgressIndicator(strokeWidth = 3.dp)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Se actualizeaza informatiile...", color = Color.DarkGray)
+                        } else {
+                            // Starea de succes
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Color(0xFF4CAF50), // Verde
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Anunt actualizat cu succes!", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }
@@ -1150,7 +1248,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
         }
 
 
-        }
+
 
 
 }
