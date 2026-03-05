@@ -55,7 +55,6 @@ android {
 
     signingConfigs {
         create("release") {
-            // Folosim variabilele de mediu injectate de GitHub Actions
             storeFile = file("$rootDir/app/release.jks")
             storePassword = System.getenv("KEY_STORE_PASSWORD")
             keyAlias = System.getenv("ALIAS")
@@ -116,5 +115,5 @@ dependencies {
     // Pentru apeluri async (Coroutines)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("androidx.navigation:navigation-compose:2.7.5")
+    implementation("androidx.navigation:navigation-compose:2.9.7")
 }
