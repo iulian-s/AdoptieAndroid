@@ -2,6 +2,8 @@
 
 package com.example.adoptie.anunt
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +49,7 @@ fun DetaliiAnuntScreen(
     onBack: () -> Unit
 ) {
     var detaliiState by remember { mutableStateOf<DetaliiState>(DetaliiState.Loading) }
+
     LaunchedEffect(anuntId) {
         detaliiState = try {
             val anunt = RetrofitClient.anuntService.getAnuntDetails(anuntId)
@@ -90,6 +94,7 @@ fun DetaliiContent(
     modifier: Modifier = Modifier,
     isEditable: Boolean = false,
     onBack: () -> Unit) {
+    val context = LocalContext.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -132,6 +137,24 @@ fun DetaliiContent(
                 Text("Stare: ${anunt.stare}", style = MaterialTheme.typography.bodyLarge)
             }
             Spacer(Modifier.height(16.dp))
+            Text("Locație", style = MaterialTheme.typography.titleMedium)
+            LocatieWidget(
+                latitudine = localitate!!.lat,
+                longitudine = localitate.lng,
+                numeLocatie = localitate.diacritice
+            ) {
+                // Deschide Google Maps extern pentru navigare
+                val gmmIntentUri = Uri.parse("geo:${localitate.lat},${localitate.lng}?q=${localitate.lat},${localitate.lng}(Locație)")
+                val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                mapIntent.setPackage("com.google.android.apps.maps")
+                try {
+                    context.startActivity(mapIntent)
+                } catch (e: Exception) {
+                    // Dacă Google Maps nu e instalat, deschidem link-ul generic în browser
+                    val browserIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                    context.startActivity(browserIntent)
+                }
+            }
         }
         if (!isEditable && user != null && localitate != null && onNavigateToProfile != null) {
             item {
