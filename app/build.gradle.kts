@@ -35,8 +35,13 @@ android {
 
         buildConfigField("String", "BACKEND_URL", "\"${getSecret("BACKEND_URL")}\"")
         buildConfigField("String", "PIC_URL", "\"${getSecret("PIC_URL")}\"")
-        buildConfigField("String", "MAPS_API_KEY", "\"${getSecret("MAPS_API_KEY")}\"")
-        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
+        val mapsKey = (localProperties["MAPS_API_KEY"] as? String)
+            ?: System.getenv("MAPS_API_KEY")
+            ?: ""
+
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsKey\"")
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsKey
     }
 
 
