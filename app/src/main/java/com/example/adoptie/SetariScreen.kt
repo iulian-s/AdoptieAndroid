@@ -95,7 +95,9 @@ import com.example.adoptie.anunt.Varsta
 import com.example.adoptie.auth.AuthApiService
 import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.localitate.LocalitateDTO
+import com.example.adoptie.utilizator.ForgotPasswordScreen
 import com.example.adoptie.utilizator.ProfilulMeuScreen
+import com.example.adoptie.utilizator.RecoverPasswordScreen
 import com.example.adoptie.utilizator.createTempFileFromUri
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
@@ -115,6 +117,10 @@ sealed class SetariRoutes(val route: String){
     object DetaliiAnuntPropriu : SetariRoutes("detalii_anunt_propriu/{anuntId}") {
         fun createRoute(id: Long) = "detalii_anunt_propriu/$id"
     }
+
+    object ForgotPassword: SetariRoutes("forgotPassword")
+
+    object RecoverPassword: SetariRoutes("recoverPassword")
 }
 @Composable
 fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
@@ -163,6 +169,7 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
                 navController = setariNavController,
                 onNavigateToRegister = { setariNavController.navigate(SetariRoutes.Register.route) },
                 onBack = { setariNavController.popBackStack() },
+                onNavigateToForgotPassword = {setariNavController.navigate(SetariRoutes.ForgotPassword.route)},
                 onLoginSuccess = {
                     isLoggedIn = true
                     // Curățăm stiva de navigare și mergem la "Main" sau un ecran de Profil
@@ -215,10 +222,23 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
             arguments = listOf(navArgument("anuntId") { type = NavType.LongType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getLong("anuntId") ?: 0L
-            // Aici chemăm noul ecran pe care îl vom crea
             AnuntPropriuDetaliiScreen(
                 anuntId = id,
                 onBack = { setariNavController.popBackStack() }
+            )
+        }
+
+        composable(SetariRoutes.ForgotPassword.route){
+            ForgotPasswordScreen(
+                onBack = { setariNavController.popBackStack() },
+                onSend = {setariNavController.navigate(SetariRoutes.RecoverPassword.route)}
+            )
+        }
+
+        composable(SetariRoutes.RecoverPassword.route){
+            RecoverPasswordScreen(
+                onBack = { setariNavController.popBackStack() },
+                onSuccess = { setariNavController.navigate(SetariRoutes.Login.route)}
             )
         }
     }
@@ -308,7 +328,12 @@ fun SetariMainContent(
 }
 
 @Composable
-fun LoginScreen(onNavigateToRegister: () -> Unit, onBack: () -> Unit, navController: NavController, onLoginSuccess: () -> Unit) {
+fun LoginScreen(
+    onNavigateToRegister: () -> Unit, onBack: () -> Unit,
+    navController: NavController,
+    onNavigateToForgotPassword: () -> Unit,
+    onLoginSuccess: () -> Unit
+) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
     var username by remember { mutableStateOf("") }
@@ -400,8 +425,14 @@ fun LoginScreen(onNavigateToRegister: () -> Unit, onBack: () -> Unit, navControl
             Text("Conectare")
         }
 
-        TextButton(onClick = onNavigateToRegister, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text("Nu ai cont? Înregistrează-te")
+        Row {
+            TextButton(onClick = onNavigateToRegister) {
+                Text("Nu ai cont? Inregistreaza-te")
+            }
+
+            TextButton(onClick = onNavigateToForgotPassword) {
+                Text("Ai uitat parola?")
+            }
         }
     }
 }

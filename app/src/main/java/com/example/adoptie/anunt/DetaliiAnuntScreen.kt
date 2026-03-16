@@ -150,7 +150,6 @@ fun DetaliiContent(
                 try {
                     context.startActivity(mapIntent)
                 } catch (e: Exception) {
-                    // Dacă Google Maps nu e instalat, deschidem link-ul generic în browser
                     val browserIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
                     context.startActivity(browserIntent)
                 }

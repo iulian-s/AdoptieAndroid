@@ -108,7 +108,6 @@ fun ExploreazaListScreen(
             raseMap = RetrofitClient.animaluteService.getRase()
 
         } catch (e: Exception) {
-            // Opțional: arată o eroare dacă nu se pot încărca filtrele
             println("Eroare la încărcarea raselor: ${e.message}")
         }
 
@@ -159,19 +158,15 @@ fun ExploreazaListScreen(
         fetchAnunturi()
         try {
             val results = when {
-                // Scenariul 1: Avem localitate selectată -> Căutare pe rază
                 selectedLocalitate != null -> {
                     RetrofitClient.anuntService.getAnunturiInRaza(
                         localitateId = selectedLocalitate!!.id,
                         razaKm = selectedRaza
                     )
                 }
-                // Scenariul 2: Avem doar județul selectat -> Filtrare pe județ
                 selectedJudet != null -> {
-                    // Va trebui să adaugi acest endpoint în AnunturiApiService
                     RetrofitClient.anuntService.getAnunturiByJudet(selectedJudet!!)
                 }
-                // Scenariul 3: Nimic selectat -> Toate anunțurile
                 else -> {
                     RetrofitClient.anuntService.getAnunturiActive()
                 }
@@ -215,7 +210,6 @@ fun ExploreazaListScreen(
             OutlinedButton(onClick = { showFilterSheet = true }) {
                 Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Filtre")
                 Spacer(Modifier.width(4.dp))
-                // Afișăm dacă există filtre active
                 Text("Filtre")
             }
 
@@ -235,7 +229,7 @@ fun ExploreazaListScreen(
                     isRefreshing = false
                 }
             },
-            modifier = Modifier.weight(1f) // Ocupă spațiul rămas sub search
+            modifier = Modifier.weight(1f)
         ) {
             when (val state = anunturiState) {
                 is AnunturiState.Loading -> {
@@ -250,7 +244,7 @@ fun ExploreazaListScreen(
                     var showError by remember { mutableStateOf(false) }
                     LaunchedEffect(state) {
                         showError = false
-                        delay(3000) // 3 secunde întârziere
+                        delay(3000)
                         showError = true
                     }
                     if(showError){
@@ -272,11 +266,10 @@ fun ExploreazaListScreen(
                         currentSortOption,
                         selectedSpecie,
                         selectedRasa,
-                        selectedVarsta // Adăugăm toți parametrii de filtrare aici
+                        selectedVarsta
                     ) {
                         var list = state.anunturi.toList()
 
-                        // A) Filtrare după căutare (Titlu/Descriere)
                         if (searchQuery.isNotBlank()) {
                             val query = searchQuery.lowercase(Locale.getDefault())
                             list = list.filter { anunt ->
@@ -290,22 +283,18 @@ fun ExploreazaListScreen(
                             }
                         }
 
-                        // B) Filtrare după Specie
                         if (selectedSpecie != null) {
                             list = list.filter { it.specie == selectedSpecie }
                         }
 
-                        // C) Filtrare după Rasă
                         if (selectedRasa != null) {
                             list = list.filter { it.rasa == selectedRasa }
                         }
 
-                        //filtrare dupa varsta
                         if (selectedVarsta != null) {
                             list = list.filter { it.varsta == selectedVarsta }
                         }
 
-                        // D) Sortare
                         when (currentSortOption) {
                             SortOption.RECENT -> list.sortedByDescending { it.updatedAt }
                             SortOption.TITLE_ASC -> list.sortedBy { it.titlu }
