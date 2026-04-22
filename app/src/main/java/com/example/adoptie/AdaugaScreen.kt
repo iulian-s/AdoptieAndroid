@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,8 +23,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,14 +50,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.adoptie.anunt.Categorie
 import com.example.adoptie.anunt.CreareAnuntDTO
 import com.example.adoptie.anunt.Gen
-import com.example.adoptie.anunt.MapLocationPicker
-import com.example.adoptie.anunt.Stare
+import com.example.adoptie.anunt.MapPickerDialog
 import com.example.adoptie.anunt.Varsta
 import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.localitate.LocalitateDTO
@@ -105,7 +107,8 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
 
     var categorieSelected by remember { mutableStateOf(Categorie.ADOPTIE) }
     var expandedCategorie by remember { mutableStateOf(false) }
-    var pinLocation by remember { mutableStateOf<LatLng?>(null) }
+    var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
+    var showMapDialog by remember { mutableStateOf(false) }
 
 
 
@@ -204,23 +207,45 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                 onExpandedChange = { expandedCategorie = it }
             )
             if (categorieSelected != Categorie.ADOPTIE) {
-                Spacer(Modifier.height(16.dp))
-                MapLocationPicker { location ->
-                    pinLocation = location
+                Text("Locație Eveniment", style = MaterialTheme.typography.titleMedium)
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .clickable { showMapDialog = true },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        if (selectedLocation == null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Default.LocationOn, contentDescription = null)
+                                Text("Apasă pentru a alege locația pe hartă")
+                            }
+                        } else {
+                            Text("Locatia a fost inregistrata, apasa pentru a modifica!", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
                 }
+            }
+
+            if (showMapDialog) {
+                MapPickerDialog(
+                    onDismiss = { showMapDialog = false },
+                    onLocationConfirm = {
+                        selectedLocation = it
+                        showMapDialog = false
+                    }
+                )
             }
             Spacer(Modifier.height(16.dp))
 
-            // Câmpuri Text
             OutlinedTextField(
                 value = titlu,
                 onValueChange = { titlu = it },
                 label = { Text("Nume/Titlu") },
                 modifier = Modifier.fillMaxWidth(),
                 isError = titlu.isBlank(),
-//                supportingText = {
-//                    if (titlu.isBlank()) Text("Camp obligatoriu", color = Color.Red)
-//                }
             )
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
@@ -230,16 +255,12 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 isError = descriere.isBlank(),
-//                supportingText = {
-//                    if (descriere.isBlank()) Text("Camp obligatoriu", color = Color.Red)
-//                }
             )
 
             Spacer(Modifier.height(16.dp))
 
             if(categorieSelected != Categorie.PROBLEMA)
-            {// 2. Dropdown RASĂ (depinde de Specie)
-
+            {
                 // 1. Dropdown SPECIE
                 EditDropdown(
                     label = "Specie",
@@ -341,8 +362,8 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                                 varsta = varsta,
                                 locatieId = locatieId,
                                 categorie = categorieSelected,
-                                latitudine = pinLocation?.latitude,
-                                longitudine = pinLocation?.longitude,
+                                latitudine = selectedLocation?.latitude,
+                                longitudine = selectedLocation?.longitude,
                             )
 
                             val dtoJson = Gson().toJson(dto)
@@ -383,8 +404,8 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                         Button(
                             onClick = {
                                 showSuccessDialog = false
-                                resetForm() // Curățăm câmpurile
-                                onSuccess() // Trimitem utilizatorul la prima pagină
+                                resetForm()
+                                onSuccess()
                             }
                         ) {
                             Text("OK")
