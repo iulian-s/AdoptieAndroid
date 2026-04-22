@@ -1,9 +1,12 @@
 package com.example.adoptie.anunt
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,10 +17,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -28,21 +33,47 @@ fun MapLocationPicker(
 ) {
     var markerPosition by remember { mutableStateOf<LatLng?>(null) }
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(44.4268, 26.1025), 10f) // Default București
+        position = CameraPosition.fromLatLngZoom(LatLng(44.4268, 26.1025), 10f)
     }
 
-    Column(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-        Text("Selectează locația pe hartă:", style = MaterialTheme.typography.bodyMedium)
-        GoogleMap(
-            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
-            cameraPositionState = cameraPositionState,
-            onMapClick = { latLng ->
-                markerPosition = latLng
-                onLocationSelected(latLng)
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(350.dp) // O înălțime generoasă ajută la manevrare
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            "Apasă pe hartă pentru a fixa locația exactă:",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
         ) {
-            markerPosition?.let {
-                Marker(state = MarkerState(position = it))
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                uiSettings = MapUiSettings(
+                    scrollGesturesEnabled = true,
+                    zoomControlsEnabled = true,
+                    zoomGesturesEnabled = true,
+                    tiltGesturesEnabled = false
+                ),
+                onMapClick = { latLng ->
+                    markerPosition = latLng
+                    onLocationSelected(latLng)
+                }
+            ) {
+                markerPosition?.let {
+                    Marker(
+                        state = MarkerState(position = it),
+                        title = "Locație selectată"
+                    )
+                }
             }
         }
     }
