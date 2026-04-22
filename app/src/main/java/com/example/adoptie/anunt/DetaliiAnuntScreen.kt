@@ -95,6 +95,14 @@ fun DetaliiContent(
     isEditable: Boolean = false,
     onBack: () -> Unit) {
     val context = LocalContext.current
+
+    val displayLat = anunt.latitudine ?: localitate?.lat ?: 0.0
+    val displayLng = anunt.longitudine ?: localitate?.lng ?: 0.0
+    val numeLocatie = if (anunt.categorie != Categorie.ADOPTIE)
+        "${anunt.categorie.display}: ${anunt.titlu}"
+    else
+        localitate?.diacritice ?: ""
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -119,6 +127,7 @@ fun DetaliiContent(
         item{
             ImageCarousel(imageUrls = anunt.listaImagini)
             Spacer(Modifier.height(16.dp))
+
             Text(anunt.titlu, fontFamily = FontFamily.SansSerif, fontSize = 26.sp, fontWeight = FontWeight.W400)
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 8.dp),
@@ -129,22 +138,31 @@ fun DetaliiContent(
             Spacer(Modifier.height(8.dp))
         }
         item {
-            Text("Specie: ${anunt.specie}", style = MaterialTheme.typography.bodyLarge)
-            Text("Rasă: ${anunt.rasa}", style = MaterialTheme.typography.bodyLarge)
-            Text("Gen: ${anunt.gen.name.lowercase()}", style = MaterialTheme.typography.bodyLarge)
-            Text("Vârstă: ${anunt.varsta.display}", style = MaterialTheme.typography.bodyLarge)
+//            if (anunt.categorie != Categorie.ADOPTIE) {
+//                Text(
+//                    text = "Categorie: ${anunt.categorie.display}",
+//                    style = MaterialTheme.typography.bodyLarge,
+//                )
+//            }
+            if (anunt.categorie != Categorie.PROBLEMA) {
+                Text("Specie: ${anunt.specie}", style = MaterialTheme.typography.bodyLarge)
+                Text("Rasă: ${anunt.rasa}", style = MaterialTheme.typography.bodyLarge)
+                Text("Gen: ${anunt.gen.name.lowercase()}", style = MaterialTheme.typography.bodyLarge)
+                Text("Vârstă: ${anunt.varsta.display}", style = MaterialTheme.typography.bodyLarge)
+            }
+
             if(isEditable){
                 Text("Stare: ${anunt.stare}", style = MaterialTheme.typography.bodyLarge)
             }
             Spacer(Modifier.height(16.dp))
             Text("Locație", style = MaterialTheme.typography.titleMedium)
             LocatieWidget(
-                latitudine = localitate!!.lat,
-                longitudine = localitate.lng,
-                numeLocatie = localitate.diacritice
+                latitudine = displayLat,
+                longitudine = displayLng,
+                numeLocatie = numeLocatie
             ) {
                 // Deschide Google Maps extern pentru navigare
-                val gmmIntentUri = Uri.parse("geo:${localitate.lat},${localitate.lng}?q=${localitate.lat},${localitate.lng}(Locație)")
+                val gmmIntentUri = Uri.parse("geo:$displayLat,$displayLng?q=$displayLat,$displayLng($numeLocatie)")
                 val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
                 mapIntent.setPackage("com.google.android.apps.maps")
                 try {

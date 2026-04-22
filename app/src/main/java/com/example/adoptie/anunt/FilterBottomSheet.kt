@@ -50,9 +50,10 @@ fun FilterBottomSheet(
     raseMap: Map<String, List<String>>,
     selectedLocalitate: LocalitateDTO?,
     selectedRaza: Double,
+    selectedCategorie: Categorie?,
     localitati: List<LocalitateDTO>,
     onDismiss: () -> Unit,
-    onApplyFilters: (specie: String?, rasa: String?, varsta: Varsta?, judet: String?, localitate: LocalitateDTO?, raza: Double) -> Unit,
+    onApplyFilters: (specie: String?, rasa: String?, varsta: Varsta?, categorie: Categorie?, judet: String?, localitate: LocalitateDTO?, raza: Double) -> Unit,
 
     ) {
     var tempSpecie by rememberSaveable { mutableStateOf(selectedSpecie) }
@@ -61,7 +62,8 @@ fun FilterBottomSheet(
     var expandedRasa by remember { mutableStateOf(false) }
     var tempVarsta by rememberSaveable { mutableStateOf(selectedVarsta) }
     var expandedVarsta by remember { mutableStateOf(false) }
-
+    var tempCategorie by rememberSaveable { mutableStateOf(selectedCategorie) }
+    var expandedCategorie by remember { mutableStateOf(false) }
 
     // Stări pentru selecția curentă
     var tempJudetSelected by remember { mutableStateOf(selectedLocalitate?.judet) }
@@ -109,6 +111,43 @@ fun FilterBottomSheet(
     ) {
         Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
             Text("Filtrează Anunțurile", style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(16.dp))
+
+            // Selector Categorie
+            Text("Categorie:")
+            ExposedDropdownMenuBox(
+                expanded = expandedCategorie,
+                onExpandedChange = { expandedCategorie = !expandedCategorie },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            ) {
+                OutlinedTextField(
+                    value = tempCategorie?.display ?: "Toate categoriile",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategorie) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expandedCategorie,
+                    onDismissRequest = { expandedCategorie = false }
+                ) {
+                    DropdownMenuItem(text = { Text("Toate categoriile") }, onClick = {
+                        tempCategorie = null
+                        tempCategorie = null
+                        expandedCategorie = false
+                    })
+                    Divider()
+
+                    Categorie.getAll().forEach { categorie ->
+                        DropdownMenuItem(text = { Text(categorie.display) }, onClick = {
+                            tempCategorie = categorie
+                            expandedCategorie = false
+                        })
+                    }
+                }
+            }
+
             Spacer(Modifier.height(16.dp))
 
             // Selector Specie
@@ -364,6 +403,7 @@ fun FilterBottomSheet(
                         null,
                         null,
                         null,
+                        null,
                         50.0
                     ); onDismiss()
                 }) {
@@ -376,6 +416,7 @@ fun FilterBottomSheet(
                             tempSpecie,
                             tempRasa,
                             tempVarsta,
+                            tempCategorie,
                             tempJudetSelected,
                             tempLocalitate,
                             tempRaza

@@ -40,7 +40,7 @@ fun AnuntCard(anunt: AnuntDTO, onCardClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCardClick()},
+            .clickable { onCardClick() },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column {
@@ -71,18 +71,28 @@ fun AnuntCard(anunt: AnuntDTO, onCardClick: () -> Unit) {
                 )
             }
             Column(modifier = Modifier.padding(16.dp)){
+
                 Text(
-                    text = anunt.titlu,
+                    text = if(anunt.categorie != Categorie.ADOPTIE) "${anunt.categorie.display} - ${anunt.titlu}"
+                    else anunt.titlu
+                    ,
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+//                if(anunt.categorie != Categorie.ADOPTIE){
+//                    Spacer(modifier = Modifier.height(4.dp))
+//                    Text(text = anunt.categorie.display, style = MaterialTheme.typography.bodyMedium)
+//                }
                 Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = anunt.rasa, style = MaterialTheme.typography.bodyMedium)
-                    Text(text = ", ${anunt.gen.toString().lowercase()},", style = MaterialTheme.typography.bodyMedium)
-                    Text(text = " Vârsta: ${anunt.varsta.display}", style = MaterialTheme.typography.bodyMedium)
+                if(anunt.categorie != Categorie.PROBLEMA){
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = anunt.rasa, style = MaterialTheme.typography.bodyMedium)
+                        Text(text = ", ${anunt.gen.toString().lowercase()},", style = MaterialTheme.typography.bodyMedium)
+                        Text(text = " Vârsta: ${anunt.varsta.display}", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
+
                 val formattedDate = formatRelativeDate(anunt.updatedAt)
                 if (formattedDate.isNotEmpty()) {
                     Text(

@@ -20,7 +20,10 @@ data class AnuntDTO(
     val locatieId: Long,
     var stare: Stare = Stare.NEVERIFICAT,
     val utilizatorId: Long = 0,
-    val updatedAt: String = ""
+    val updatedAt: String = "",
+    val categorie: Categorie = Categorie.ADOPTIE,
+    val latitudine: Double? = null,
+    val longitudine: Double? = null,
 )
 
 data class CreareAnuntDTO(
@@ -34,7 +37,10 @@ data class CreareAnuntDTO(
     var varstaMax: Int? = varsta.maxLuni,
     val utilizatorId: Long = 0,
     var stare: Stare = Stare.NEVERIFICAT,
-    var locatieId: Long = 0
+    var locatieId: Long = 0,
+    val categorie: Categorie = Categorie.ADOPTIE,
+    val latitudine: Double? = null,
+    val longitudine: Double? = null,
 )
 
 enum class Varsta(val display: String, val minLuni: Int?, val maxLuni: Int?) {
@@ -48,5 +54,15 @@ enum class Varsta(val display: String, val minLuni: Int?, val maxLuni: Int?) {
 
     companion object {
         fun getAll() = entries
+    }
+}
+
+enum class Categorie(val display: String){
+    ADOPTIE("Adoptie"),
+    PIERDUT("Pierdut"),
+    GASIT("Gasit"),
+    PROBLEMA("Pericol");
+    companion object {
+        fun getAll() = Categorie.entries
     }
 }

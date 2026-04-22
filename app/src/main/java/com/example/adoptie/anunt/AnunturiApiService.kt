@@ -4,6 +4,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -42,4 +43,7 @@ interface AnunturiApiService {
         @Part("anunt") dto: RequestBody, // JSON-ul trimis ca RequestBody
         @Part imagini: List<MultipartBody.Part> // Lista de fișiere
     ): Response<AnuntDTO>
+
+    @DELETE("api/anunturi/{id}")
+    suspend fun stergereAnunt(@Path("id") id: Long): Response<Unit>
 }

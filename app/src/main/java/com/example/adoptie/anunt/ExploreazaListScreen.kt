@@ -80,6 +80,7 @@ fun ExploreazaListScreen(
     var selectedSpecie by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedRasa by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedVarsta by rememberSaveable { mutableStateOf<Varsta?>(null) }
+    var selectedCategorie by rememberSaveable { mutableStateOf<Categorie?>(null) }
     var raseMap by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
     var selectedLocalitate by rememberSaveable { mutableStateOf<LocalitateDTO?>(null) }
     var selectedJudet by rememberSaveable { mutableStateOf<String?>(null) }
@@ -266,7 +267,8 @@ fun ExploreazaListScreen(
                         currentSortOption,
                         selectedSpecie,
                         selectedRasa,
-                        selectedVarsta
+                        selectedVarsta,
+                        selectedCategorie
                     ) {
                         var list = state.anunturi.toList()
 
@@ -293,6 +295,10 @@ fun ExploreazaListScreen(
 
                         if (selectedVarsta != null) {
                             list = list.filter { it.varsta == selectedVarsta }
+                        }
+
+                        if (selectedCategorie != null) {
+                            list = list.filter { it.categorie == selectedCategorie }
                         }
 
                         when (currentSortOption) {
@@ -341,15 +347,17 @@ fun ExploreazaListScreen(
                 selectedSpecie = selectedSpecie,
                 selectedRasa = selectedRasa,
                 selectedVarsta = selectedVarsta,
+                selectedCategorie = selectedCategorie,
                 raseMap = raseMap,
                 localitati = allLocalitati,
                 selectedLocalitate = selectedLocalitate,
                 selectedRaza = selectedRaza,
                 onDismiss = { showFilterSheet = false },
-                onApplyFilters = { specie, rasa, varsta, judet, localitate, raza ->
+                onApplyFilters = { specie, rasa, varsta, categorie, judet, localitate, raza ->
                     selectedSpecie = specie
                     selectedRasa = rasa
                     selectedVarsta = varsta
+                    selectedCategorie = categorie
                     selectedJudet = judet
                     selectedLocalitate = localitate
                     selectedRaza = raza

@@ -87,10 +87,10 @@ fun UtilizatorCard(user: UtilizatorDTO, localitate: LocalitateDTO, onCardClick: 
                     }
 
                 }
-                Text(
-                    text = "${localitate.nume}, ${localitate.judet}",
-                    style = MaterialTheme.typography.bodyMedium
-                    )
+//                Text(
+//                    text = "${localitate.nume}, ${localitate.judet}",
+//                    style = MaterialTheme.typography.bodyMedium
+//                    )
             }
         }
     }

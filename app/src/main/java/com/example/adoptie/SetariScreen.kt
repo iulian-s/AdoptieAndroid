@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.List
@@ -88,6 +89,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.example.adoptie.anunt.AnuntDTO
+import com.example.adoptie.anunt.Categorie
 import com.example.adoptie.anunt.Gen
 import com.example.adoptie.anunt.ImageCarousel
 import com.example.adoptie.anunt.Stare
@@ -224,7 +226,8 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
             val id = backStackEntry.arguments?.getLong("anuntId") ?: 0L
             AnuntPropriuDetaliiScreen(
                 anuntId = id,
-                onBack = { setariNavController.popBackStack() }
+                onBack = { setariNavController.popBackStack() },
+                onDelete = {setariNavController.navigate(SetariRoutes.AnunturileMele.route)}
             )
         }
 
@@ -657,7 +660,9 @@ fun AnunturileMeleScreen(
                 Text("Nu ai postat niciun anunț încă.")
             }
         } else {
-            Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            Column(modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -744,12 +749,13 @@ fun AnuntPropriuItem(
             // 📝 Detalii Text
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = anunt.titlu,
+                    text = "${anunt.categorie.display} - ${anunt.titlu}",
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
+                if(anunt.categorie != Categorie.PROBLEMA)
                 Text(
                     text = "${anunt.specie} • ${anunt.rasa}",
                     style = MaterialTheme.typography.bodySmall,
@@ -787,7 +793,7 @@ fun AnuntPropriuItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
+fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () -> Unit) {
     var anunt by remember { mutableStateOf<AnuntDTO?>(null) }
     var isEditing by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
@@ -828,7 +834,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
     ) { uris -> imaginiNoiUris = uris }
 
     var showBackupWarning by remember { mutableStateOf(false) }
-
+    var showDeletionWarning by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
 
     LaunchedEffect(anuntId) {
@@ -919,6 +925,20 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
         }
     }
 
+    fun stergereAnunt(){
+        scope.launch {
+            try{
+                val response = RetrofitClient.anuntService.stergereAnunt(anuntId)
+                if(response.isSuccessful){
+                    onDelete()
+                    Toast.makeText(context, "Anunt sters cu succes!", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception){
+                Toast.makeText(context, "Problema la stergerea anuntului..", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     Scaffold(){ padding ->
         if (isLoading) { /* CircularProgressIndicator */ }
         else {
@@ -942,30 +962,75 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
 //                    style = MaterialTheme.typography.titleLarge
 //                )
 
-                // EDIT / SAVE
-                if(editStare != Stare.NEVERIFICAT){
-                    IconButton(
-                        onClick = {
-                            if (isEditing) {
-                                if (imaginiNoiUris.isNotEmpty()) {
-                                    showBackupWarning = true
-                                } else {
-                                    executaSalvareaAnuntului()
+
+                if (showDeletionWarning) {
+                    AlertDialog(
+                        onDismissRequest = { showDeletionWarning = false },
+                        title = {
+                            Text("Confirmare actiune ireversibila")
+                        },
+                        text = {
+                            Text("Esti sigur ca vrei sa stergi anuntul?")
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    showDeletionWarning = false
+                                    stergereAnunt()
                                 }
-                            } else {
-                                isEditing = true
+                            ) {
+                                Text("Da")
                             }
                         },
-                        modifier = Modifier.align(Alignment.TopEnd),
-                        enabled = !isEditing || isDataValid
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    showDeletionWarning = false
+                                }
+                            ) {
+                                Text("Nu")
+                            }
+                        }
+                    )
+                }
+
+                Row(modifier = Modifier.align(Alignment.TopEnd)){
+                    //DELETE
+                    IconButton(
+                        onClick = {
+                            showDeletionWarning = true
+                        },
                     ) {
                         Icon(
-                            imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                            contentDescription = if (isEditing) "Salvează" else "Editează",
-                            tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Stergere anunt"
                         )
                     }
+                    // EDIT / SAVE
+                    if(editStare != Stare.NEVERIFICAT){
+                        IconButton(
+                            onClick = {
+                                if (isEditing) {
+                                    if (imaginiNoiUris.isNotEmpty()) {
+                                        showBackupWarning = true
+                                    } else {
+                                        executaSalvareaAnuntului()
+                                    }
+                                } else {
+                                    isEditing = true
+                                }
+                            },
+                            enabled = !isEditing || isDataValid
+                        ) {
+                            Icon(
+                                imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                                contentDescription = if (isEditing) "Salvează" else "Editează",
+                                tint = if (isEditing) Color(0xFF4CAF50) else LocalContentColor.current
+                            )
+                        }
+                    }
                 }
+
 
             }
 
@@ -995,7 +1060,9 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     if (imaginiNoiUris.isNotEmpty()) {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(imaginiNoiUris) { uri ->
-                                AsyncImage(model = uri, contentDescription = null, modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+                                AsyncImage(model = uri, contentDescription = null, modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
                             }
                         }
                     }
@@ -1030,93 +1097,96 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     )
 
                     Spacer(Modifier.height(16.dp))
-                    // 1. Dropdown SPECIE
-                    EditDropdown(
-                        label = "Specie",
-                        selectedValue = editSpecie,
-                        options = raseMap.keys.toList(),
-                        optionToString = { it },
-                        onValueChange = {
-                            editSpecie = it
-                            editRasa = raseMap[it]?.firstOrNull() ?: "" // Resetăm rasa la prima disponibilă din noua specie
-                        },
-                        expanded = expandedSpecie,
-                        onExpandedChange = { expandedSpecie = it }
-                    )
-
-                    // 2. Dropdown RASĂ (depinde de Specie)
-                    EditDropdown(
-                        label = "Rasă",
-                        selectedValue = editRasa,
-                        options = raseMap[editSpecie] ?: emptyList(),
-                        optionToString = { it },
-                        onValueChange = { editRasa = it },
-                        expanded = expandedRasa,
-                        onExpandedChange = { expandedRasa = it }
-                    )
-
-                    // 3. Dropdown GEN (Enum)
-                    EditDropdown(
-                        label = "Gen",
-                        selectedValue = editGen?.name?.lowercase() ?: "",
-                        options = Gen.entries, // Presupunând că ai enum-ul Gen cu entries (Kotlin 1.9+)
-                        optionToString = { it.name.lowercase() },
-                        onValueChange = { editGen = it },
-                        expanded = expandedGen,
-                        onExpandedChange = { expandedGen = it }
-                    )
-
-                    // 4. Dropdown VÂRSTĂ (Enum)
-                    EditDropdown(
-                        label = "Vârstă",
-                        selectedValue = editVarsta?.display ?: "",
-                        options = Varsta.entries,
-                        optionToString = { it.display },
-                        onValueChange = { editVarsta = it },
-                        expanded = expandedVarsta,
-                        onExpandedChange = { expandedVarsta = it }
-                    )
-                    // 5. Dropdown Stare (Enum)
-
-                    EditDropdown(
-                        label = "Stare",
-                        selectedValue = editStare?.name?.lowercase() ?: "",
-                        options = listOf(Stare.ACTIV, Stare.INACTIV),
-                        optionToString = { it.name.lowercase() },
-                        onValueChange = { editStare = it },
-                        expanded = expandedStare,
-                        onExpandedChange = { expandedStare = it }
-                    )
-
-
-                    //6. Dropdown Judet
-                    EditDropdown(
-                        label = "Judet",
-                        selectedValue = editJudet ?: "",
-                        options = listaJudete,
-                        optionToString = { it },
-                        onValueChange = {
-                            editJudet = it
-                            editLocalitate = ""
-                                        },
-                        expanded = expandedJudet,
-                        onExpandedChange = { expandedJudet = it }
-                    )
-                    //6. Dropdown Localitate
-                    if(editJudet != null) {
+                    if(anunt?.categorie != Categorie.PROBLEMA){
+                        // 1. Dropdown SPECIE
                         EditDropdown(
-                            label = "Localitate",
-                            selectedValue = editLocalitate ?: "",
-                            options = listaOraseByJudet,
-                            optionToString = { it.nume },
+                            label = "Specie",
+                            selectedValue = editSpecie,
+                            options = raseMap.keys.toList(),
+                            optionToString = { it },
                             onValueChange = {
-                                editLocalitate = it.nume
-                                editLocalitateId = it.id
-                                            },
-                            expanded = expandedLocalitate,
-                            onExpandedChange = { expandedLocalitate = it }
+                                editSpecie = it
+                                editRasa = raseMap[it]?.firstOrNull() ?: "" // Resetăm rasa la prima disponibilă din noua specie
+                            },
+                            expanded = expandedSpecie,
+                            onExpandedChange = { expandedSpecie = it }
+                        )
+
+                        // 2. Dropdown RASĂ (depinde de Specie)
+                        EditDropdown(
+                            label = "Rasă",
+                            selectedValue = editRasa,
+                            options = raseMap[editSpecie] ?: emptyList(),
+                            optionToString = { it },
+                            onValueChange = { editRasa = it },
+                            expanded = expandedRasa,
+                            onExpandedChange = { expandedRasa = it }
+                        )
+
+                        // 3. Dropdown GEN (Enum)
+                        EditDropdown(
+                            label = "Gen",
+                            selectedValue = editGen?.name?.lowercase() ?: "",
+                            options = Gen.entries, // Presupunând că ai enum-ul Gen cu entries (Kotlin 1.9+)
+                            optionToString = { it.name.lowercase() },
+                            onValueChange = { editGen = it },
+                            expanded = expandedGen,
+                            onExpandedChange = { expandedGen = it }
+                        )
+
+                        // 4. Dropdown VÂRSTĂ (Enum)
+                        EditDropdown(
+                            label = "Vârstă",
+                            selectedValue = editVarsta?.display ?: "",
+                            options = Varsta.entries,
+                            optionToString = { it.display },
+                            onValueChange = { editVarsta = it },
+                            expanded = expandedVarsta,
+                            onExpandedChange = { expandedVarsta = it }
+                        )
+                        // 5. Dropdown Stare (Enum)
+
+                        EditDropdown(
+                            label = "Stare",
+                            selectedValue = editStare?.name?.lowercase() ?: "",
+                            options = listOf(Stare.ACTIV, Stare.INACTIV),
+                            optionToString = { it.name.lowercase() },
+                            onValueChange = { editStare = it },
+                            expanded = expandedStare,
+                            onExpandedChange = { expandedStare = it }
                         )
                     }
+                    if(anunt?.categorie == Categorie.ADOPTIE){
+                        //6. Dropdown Judet
+                        EditDropdown(
+                            label = "Judet",
+                            selectedValue = editJudet ?: "",
+                            options = listaJudete,
+                            optionToString = { it },
+                            onValueChange = {
+                                editJudet = it
+                                editLocalitate = ""
+                            },
+                            expanded = expandedJudet,
+                            onExpandedChange = { expandedJudet = it }
+                        )
+                        //6. Dropdown Localitate
+                        if(editJudet != null) {
+                            EditDropdown(
+                                label = "Localitate",
+                                selectedValue = editLocalitate ?: "",
+                                options = listaOraseByJudet,
+                                optionToString = { it.nume },
+                                onValueChange = {
+                                    editLocalitate = it.nume
+                                    editLocalitateId = it.id
+                                },
+                                expanded = expandedLocalitate,
+                                onExpandedChange = { expandedLocalitate = it }
+                            )
+                        }
+                    }
+
 
 
 
@@ -1125,17 +1195,20 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit) {
                     Text(anunt?.titlu ?: "", fontSize = 26.sp, fontWeight = FontWeight.W400)
                     HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     Text(anunt?.descriere ?: "", fontSize = 18.sp)
-                    // Restul detaliilor (Specie, Rasă etc.) rămân sub formă de Text momentan
-                    Spacer(Modifier.height(16.dp))
-                    Text("Specie: ${anunt?.specie}", style = MaterialTheme.typography.bodyLarge)
-                    Text("Rasă: ${anunt?.rasa}", style = MaterialTheme.typography.bodyLarge)
-                    Text("Gen: ${anunt?.gen?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
-                    Text("Varsta: ${anunt?.varsta?.display}", style = MaterialTheme.typography.bodyLarge)
+                    if(anunt?.categorie != Categorie.PROBLEMA){
+                        Spacer(Modifier.height(16.dp))
+                        Text("Specie: ${anunt?.specie}", style = MaterialTheme.typography.bodyLarge)
+                        Text("Rasă: ${anunt?.rasa}", style = MaterialTheme.typography.bodyLarge)
+                        Text("Gen: ${anunt?.gen?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
+                        Text("Varsta: ${anunt?.varsta?.display}", style = MaterialTheme.typography.bodyLarge)
+                    }
                     Text("Stare: ${anunt?.stare?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        text = "Locatie: ${editLocalitate}, ${editJudet}",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    if(anunt?.categorie == Categorie.ADOPTIE) {
+                        Text(
+                            text = "Locatie: ${editLocalitate}, ${editJudet}",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
 
 

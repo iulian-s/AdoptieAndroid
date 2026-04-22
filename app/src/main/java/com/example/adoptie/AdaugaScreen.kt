@@ -49,13 +49,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.adoptie.anunt.Categorie
 import com.example.adoptie.anunt.CreareAnuntDTO
 import com.example.adoptie.anunt.Gen
+import com.example.adoptie.anunt.MapLocationPicker
 import com.example.adoptie.anunt.Stare
 import com.example.adoptie.anunt.Varsta
 import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.localitate.LocalitateDTO
 import com.example.adoptie.utilizator.createTempFileFromUri
+import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -75,11 +78,11 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
     // State-uri pentru formular
     var titlu by remember { mutableStateOf("") }
     var descriere by remember { mutableStateOf("") }
-    var specie by remember { mutableStateOf("") }
-    var rasa by remember { mutableStateOf("") }
+    var specie by remember { mutableStateOf("Caine") }
+    var rasa by remember { mutableStateOf("Metis") }
     var gen by remember { mutableStateOf(Gen.MASCUL) }
     var varsta by remember { mutableStateOf(Varsta.NECUNOSCUT) }
-    var locatieId by remember { mutableLongStateOf(0L) }
+    var locatieId by remember { mutableLongStateOf(1L) }
 
     var imaginiUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var isSubmitting by remember { mutableStateOf(false) }
@@ -99,6 +102,10 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
 
     var judet by remember { mutableStateOf<String?>("") }
     var localitate by remember { mutableStateOf<String?>("") }
+
+    var categorieSelected by remember { mutableStateOf(Categorie.ADOPTIE) }
+    var expandedCategorie by remember { mutableStateOf(false) }
+    var pinLocation by remember { mutableStateOf<LatLng?>(null) }
 
 
 
@@ -178,19 +185,37 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     AsyncImage(
                         model = uri,
                         contentDescription = null,
-                        modifier = Modifier.size(100.dp).clip(RoundedCornerShape(8.dp)),
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(8.dp)),
                         contentScale = ContentScale.Crop
                     )
                 }
             }
 
             Spacer(Modifier.height(16.dp))
+            EditDropdown(
+                label = "Categorie",
+                selectedValue = categorieSelected.display,
+                options = Categorie.entries,
+                optionToString = { it.display },
+                onValueChange = { categorieSelected = it },
+                expanded = expandedCategorie,
+                onExpandedChange = { expandedCategorie = it }
+            )
+            if (categorieSelected != Categorie.ADOPTIE) {
+                Spacer(Modifier.height(16.dp))
+                MapLocationPicker { location ->
+                    pinLocation = location
+                }
+            }
+            Spacer(Modifier.height(16.dp))
 
             // Câmpuri Text
             OutlinedTextField(
                 value = titlu,
                 onValueChange = { titlu = it },
-                label = { Text("Nume") },
+                label = { Text("Nume/Titlu") },
                 modifier = Modifier.fillMaxWidth(),
                 isError = titlu.isBlank(),
 //                supportingText = {
@@ -211,80 +236,87 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
             )
 
             Spacer(Modifier.height(16.dp))
-            // 1. Dropdown SPECIE
-            EditDropdown(
-                label = "Specie",
-                selectedValue = specie,
-                options = raseMap.keys.toList(),
-                optionToString = { it },
-                onValueChange = {
-                    specie = it
-                    rasa = raseMap[it]?.firstOrNull() ?: "" // Resetăm rasa la prima disponibilă din noua specie
-                },
-                expanded = expandedSpecie,
-                onExpandedChange = { expandedSpecie = it }
-            )
 
-            // 2. Dropdown RASĂ (depinde de Specie)
-            EditDropdown(
-                label = "Rasă",
-                selectedValue = rasa,
-                options = raseMap[specie] ?: emptyList(),
-                optionToString = { it },
-                onValueChange = { rasa = it },
-                expanded = expandedRasa,
-                onExpandedChange = { expandedRasa = it }
-            )
+            if(categorieSelected != Categorie.PROBLEMA)
+            {// 2. Dropdown RASĂ (depinde de Specie)
 
-            // 3. Dropdown GEN (Enum)
-            EditDropdown(
-                label = "Gen",
-                selectedValue = gen.name.lowercase(),
-                options = Gen.entries, // Presupunând că ai enum-ul Gen cu entries (Kotlin 1.9+)
-                optionToString = { it.name.lowercase() },
-                onValueChange = { gen = it },
-                expanded = expandedGen,
-                onExpandedChange = { expandedGen = it }
-            )
-
-            // 4. Dropdown VÂRSTĂ (Enum)
-            EditDropdown(
-                label = "Vârstă",
-                selectedValue = varsta.display,
-                options = Varsta.entries,
-                optionToString = { it.display },
-                onValueChange = { varsta = it },
-                expanded = expandedVarsta,
-                onExpandedChange = { expandedVarsta = it }
-            )
-            //6. Dropdown Judet
-            EditDropdown(
-                label = "Judet",
-                selectedValue = judet ?: "",
-                options = listaJudete,
-                optionToString = { it },
-                onValueChange = {
-                    judet = it
-                    localitate = ""
-                },
-                expanded = expandedJudet,
-                onExpandedChange = { expandedJudet = it }
-            )
-            //6. Dropdown Localitate
-            if(judet != null) {
+                // 1. Dropdown SPECIE
                 EditDropdown(
-                    label = "Localitate",
-                    selectedValue = localitate ?: "",
-                    options = listaOraseByJudet,
-                    optionToString = { it.nume },
+                    label = "Specie",
+                    selectedValue = specie,
+                    options = raseMap.keys.toList(),
+                    optionToString = { it },
                     onValueChange = {
-                        localitate = it.nume
-                        locatieId = it.id
+                        specie = it
+                        rasa = raseMap[it]?.firstOrNull() ?: "" // Resetăm rasa la prima disponibilă din noua specie
                     },
-                    expanded = expandedLocalitate,
-                    onExpandedChange = { expandedLocalitate = it }
+                    expanded = expandedSpecie,
+                    onExpandedChange = { expandedSpecie = it }
+                )
+
+                EditDropdown(
+                    label = "Rasă",
+                    selectedValue = rasa,
+                    options = raseMap[specie] ?: emptyList(),
+                    optionToString = { it },
+                    onValueChange = { rasa = it },
+                    expanded = expandedRasa,
+                    onExpandedChange = { expandedRasa = it }
+                )
+
+                // 3. Dropdown GEN (Enum)
+                EditDropdown(
+                    label = "Gen",
+                    selectedValue = gen.name.lowercase(),
+                    options = Gen.entries, // Presupunând că ai enum-ul Gen cu entries (Kotlin 1.9+)
+                    optionToString = { it.name.lowercase() },
+                    onValueChange = { gen = it },
+                    expanded = expandedGen,
+                    onExpandedChange = { expandedGen = it }
+                )
+
+                // 4. Dropdown VÂRSTĂ (Enum)
+                EditDropdown(
+                    label = "Vârstă",
+                    selectedValue = varsta.display,
+                    options = Varsta.entries,
+                    optionToString = { it.display },
+                    onValueChange = { varsta = it },
+                    expanded = expandedVarsta,
+                    onExpandedChange = { expandedVarsta = it }
                 )
             }
+            //6. Dropdown Judet
+            if(categorieSelected == Categorie.ADOPTIE){
+                EditDropdown(
+                    label = "Judet",
+                    selectedValue = judet ?: "",
+                    options = listaJudete,
+                    optionToString = { it },
+                    onValueChange = {
+                        judet = it
+                        localitate = ""
+                    },
+                    expanded = expandedJudet,
+                    onExpandedChange = { expandedJudet = it }
+                )
+                //6. Dropdown Localitate
+                if(judet != null) {
+                    EditDropdown(
+                        label = "Localitate",
+                        selectedValue = localitate ?: "",
+                        options = listaOraseByJudet,
+                        optionToString = { it.nume },
+                        onValueChange = {
+                            localitate = it.nume
+                            locatieId = it.id
+                        },
+                        expanded = expandedLocalitate,
+                        onExpandedChange = { expandedLocalitate = it }
+                    )
+                }
+            }
+
 
             Spacer(Modifier.height(24.dp))
 
@@ -307,7 +339,10 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                                 rasa = rasa,
                                 gen = gen,
                                 varsta = varsta,
-                                locatieId = locatieId
+                                locatieId = locatieId,
+                                categorie = categorieSelected,
+                                latitudine = pinLocation?.latitude,
+                                longitudine = pinLocation?.longitude,
                             )
 
                             val dtoJson = Gson().toJson(dto)
