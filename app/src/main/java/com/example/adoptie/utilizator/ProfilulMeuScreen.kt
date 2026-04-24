@@ -123,7 +123,6 @@ fun ProfilulMeuScreen(
                     if (isEditing) {
                         IconButton(onClick = {
                             scope.launch {
-                                // 1. Creăm JSON-ul pentru DTO
                                 val editDto = EditareUtilizatorDTO(
                                     nume = editNume,
                                     telefon = editTelefon,
@@ -135,11 +134,9 @@ fun ProfilulMeuScreen(
                                 val dtoJson = Gson().toJson(editDto)
                                 val dtoPart = dtoJson.toRequestBody("application/json".toMediaTypeOrNull())
 
-                                // 2. Pregătim imaginea dacă a fost selectată una nouă
                                 val avatarPart = selectedImageUri?.let { uri ->
                                     val file = context.createTempFileFromUri(uri)
                                     val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                                    // "avatar" trebuie să se potrivească cu @RequestPart("avatar") din Spring
                                     MultipartBody.Part.createFormData("avatar", file.name, requestFile)
                                 }
 
@@ -172,7 +169,7 @@ fun ProfilulMeuScreen(
             userState?.let { user ->
                 Column(modifier = Modifier.padding(padding).padding(16.dp).fillMaxWidth().verticalScroll(rememberScrollState())) {
 
-                    // Secțiune Avatar
+                    // Sectiune Avatar
                     Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
                         val avatarUrl = BASE_IMAGE_URL + (user.avatar ?: "/imagini/avatar.png")
                         AsyncImage(
@@ -223,7 +220,6 @@ fun ProfilulMeuScreen(
                         if (vreaSaSchimbeParola) {
                             Spacer(Modifier.height(8.dp))
 
-                            // Câmp pentru Parola Veche (Userul o scrie manual)
                             OutlinedTextField(
                                 value = parolaVecheInput,
                                 onValueChange = { parolaVecheInput = it },
@@ -235,7 +231,6 @@ fun ProfilulMeuScreen(
 
                             Spacer(Modifier.height(8.dp))
 
-                            // Câmp pentru Parola Nouă
                             OutlinedTextField(
                                 value = parolaNouaInput,
                                 onValueChange = { parolaNouaInput = it },
@@ -245,15 +240,12 @@ fun ProfilulMeuScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                             )
                         }
-                        // Locația o lăsăm momentan Read-Only sau adaugi Dropdown similar cu Anunțurile
-                        //InfoRow(label = "Locație (ne-editabilă)", value = "${localitateState?.nume}")
                     } else {
                         InfoRow(label = "Nume", value = user.nume)
                         InfoRow(label = "Email", value = user.username)
                         InfoRow(label = "Telefon", value = user.telefon)
                     }
 
-                    // Butonul de ștergere (afișat doar când nu edităm)
                     if (!isEditing) {
                         Spacer(Modifier.height(32.dp))
                         OutlinedButton(
@@ -265,7 +257,6 @@ fun ProfilulMeuScreen(
                         }
                     }
 
-// Dialogul de confirmare
                     if (showDeleteDialog) {
                         androidx.compose.material3.AlertDialog(
                             onDismissRequest = {
@@ -300,7 +291,7 @@ fun ProfilulMeuScreen(
                                                         Toast.makeText(context, "Cont șters.", Toast.LENGTH_SHORT).show()
                                                         onAccountDeleted()
 
-                                                        //onBack() // Sau navigare către Login
+                                                        //onBack()
                                                     } else {
                                                         Toast.makeText(context, "Parolă incorectă!", Toast.LENGTH_SHORT).show()
                                                     }

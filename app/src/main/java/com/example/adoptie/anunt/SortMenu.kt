@@ -24,7 +24,6 @@ fun SortMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    // Afișează opțiunea curentă + iconiță de sortare
     Box{
         Row(
             modifier = Modifier.clickable { expanded = true }

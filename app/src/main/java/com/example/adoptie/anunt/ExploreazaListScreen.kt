@@ -75,7 +75,6 @@ fun ExploreazaListScreen(
     val scope = rememberCoroutineScope ()
     var isRefreshing by remember { mutableStateOf(false) }
 
-    // Stările specifice filtrelor
     var showFilterSheet by rememberSaveable { mutableStateOf(false) }
     var selectedSpecie by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedRasa by rememberSaveable { mutableStateOf<String?>(null) }
@@ -118,41 +117,6 @@ fun ExploreazaListScreen(
             println("Eroare localități: ${e.message}")
         }
     }
-
-//    LaunchedEffect(Unit) {
-//        val apiService = RetrofitClient.anuntService
-//        anunturiState = AnunturiState.Loading
-//        anunturiState = try {
-//            if (selectedLocalitate != null){
-//                val results = apiService.getAnunturiInRaza(
-//                    selectedLocalitate!!.id,
-//                    selectedRaza
-//                )
-//                AnunturiState.Success(results)
-//            }
-//            else{
-//                val all = apiService.getAnunturiActive()
-//                AnunturiState.Success(all)
-//            }
-//
-//        } catch (e: Exception){
-//            AnunturiState.Error("Eroare la incarcarea anunturilor: ${e.message}")
-//        }
-//
-//        try {
-//            raseMap = RetrofitClient.animaluteService.getRase()
-//
-//        } catch (e: Exception) {
-//            // Opțional: arată o eroare dacă nu se pot încărca filtrele
-//            println("Eroare la încărcarea raselor: ${e.message}")
-//        }
-//
-//        try {
-//            allLocalitati = RetrofitClient.localitateService.getAllLocalitati()
-//        } catch (e: Exception) {
-//            println("Eroare localități: ${e.message}")
-//        }
-//    }
 
     LaunchedEffect(selectedLocalitate,selectedJudet, selectedRaza) {
         anunturiState = AnunturiState.Loading

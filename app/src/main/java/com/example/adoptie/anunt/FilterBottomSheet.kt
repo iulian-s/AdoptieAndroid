@@ -74,7 +74,6 @@ fun FilterBottomSheet(
     var listaJudete by remember { mutableStateOf<List<String>>(emptyList()) }
     var listaOraseByJudet by remember { mutableStateOf<List<LocalitateDTO>>(emptyList()) }
 
-    // Stări pentru UI (Dropdown-uri)
     var expandedJudet by remember { mutableStateOf(false) }
     var expandedOras by remember { mutableStateOf(false) }
     var orasQuery by remember { mutableStateOf("") }
@@ -169,10 +168,9 @@ fun FilterBottomSheet(
                     expanded = expandedSpecie,
                     onDismissRequest = { expandedSpecie = false }
                 ) {
-                    // Opțiune implicită (Fără filtru)
                     DropdownMenuItem(text = { Text("Toate speciile") }, onClick = {
                         tempSpecie = null
-                        tempRasa = null // Resetează rasa când specia se schimbă
+                        tempRasa = null
                         expandedSpecie = false
                     })
                     Divider()
@@ -189,7 +187,7 @@ fun FilterBottomSheet(
 
             Spacer(Modifier.height(16.dp))
 
-            // Selector Rasă
+            // Selector Rasa
             if (tempSpecie != null) {
                 Text("Rasă:", style = MaterialTheme.typography.titleMedium)
                 ExposedDropdownMenuBox(
@@ -248,14 +246,12 @@ fun FilterBottomSheet(
                     expanded = expandedVarsta,
                     onDismissRequest = { expandedVarsta = false }
                 ) {
-                    // Opțiune implicită (Fără filtru)
                     DropdownMenuItem(text = { Text("Toate vârstele") }, onClick = {
                         tempVarsta = null
                         expandedVarsta = false
                     })
                     Divider()
 
-                    // Optiunile din Enum
                     Varsta.getAll().forEach { varsta ->
                         DropdownMenuItem(text = { Text(varsta.display) }, onClick = {
                             tempVarsta = varsta
@@ -350,7 +346,7 @@ fun FilterBottomSheet(
                                         onClick = {
                                             tempLocalitate = loc
                                             expandedOras = false
-                                            orasQuery = "" // Resetăm după selecție
+                                            orasQuery = ""
                                         }
                                     )
                                 }
@@ -371,7 +367,7 @@ fun FilterBottomSheet(
 
 
                 }
-                // --- SLIDER RAZĂ ---
+                // --- SLIDER RAZA---
                 if (tempLocalitate != null) {
                     Spacer(Modifier.height(16.dp))
                     Text(

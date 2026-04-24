@@ -99,16 +99,6 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
 
 
-//                LaunchedEffect(Unit) {
-//                    AuthEvents.logoutEvent.collect {
-//                        selectedItemIndex = 2 // Tab-ul de Setări
-//                        setariNavHostController?.navigate(SetariRoutes.Login.route) {
-//                            popUpTo(0) // Curățăm toată stiva de navigare
-//                        }
-//                        Toast.makeText(context, "Sesiune expirată. Te rugăm să te reconectezi.", Toast.LENGTH_LONG).show()
-//                    }
-//                }
-
 
                 Scaffold(
                     bottomBar = {
@@ -195,7 +185,6 @@ class MainActivity : ComponentActivity() {
 ////                                    selectedItemIndex = 2
 ////                                    setariNavHostController?.let { controller ->
 ////                                        controller.navigate(SetariRoutes.Login.route) {
-////                                            // Evităm duplicarea paginii de login în stivă
 ////                                            launchSingleTop = true
 ////                                        }
 ////                                    }

@@ -18,10 +18,10 @@ interface AuthApiService {
     )
 
     data class CreareUtilizatorDTO(
-        val username: String,     // Nickname-ul (ex: "ionut99")
-        val email: String,        // Adresa de email (ex: "ion@gmail.com")
+        val username: String,
+        val email: String,
         val parola: String,
-        val nume: String,         // Numele real
+        val nume: String,
         val telefon: String,
         val rol: String = "USER",
         var localitateId: Long? = null

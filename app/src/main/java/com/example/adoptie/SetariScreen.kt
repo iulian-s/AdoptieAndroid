@@ -130,7 +130,6 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
     val setariNavController = rememberNavController()
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-    // Stare pentru a verifica dacă utilizatorul este logat
     var isLoggedIn by remember {
         mutableStateOf(tokenManager.getToken() != null)
     }
@@ -143,12 +142,9 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
         navController = setariNavController,
         startDestination = SetariRoutes.Main.route
     ) {
-        // Pagina principală de Setări
         composable(SetariRoutes.Main.route) {
             LaunchedEffect(isLoggedIn) {
                 if (!isLoggedIn) {
-                    // Putem lăsa utilizatorul pe pagina de "Intră în cont"
-                    // sau să îl trimitem automat la ecranul de Login
                      setariNavController.navigate(SetariRoutes.Login.route)
                 }
             }
@@ -156,7 +152,7 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
                 isLoggedIn = isLoggedIn,
                 onNavigateToLogin = { setariNavController.navigate(SetariRoutes.Login.route) },
                 onLogout = {
-                    isLoggedIn = false // Actualizăm starea pentru a schimba UI-ul instant
+                    isLoggedIn = false
                     tokenManager.deleteToken()
 
                 },
@@ -174,7 +170,6 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
                 onNavigateToForgotPassword = {setariNavController.navigate(SetariRoutes.ForgotPassword.route)},
                 onLoginSuccess = {
                     isLoggedIn = true
-                    // Curățăm stiva de navigare și mergem la "Main" sau un ecran de Profil
                     setariNavController.navigate(SetariRoutes.Main.route) {
                         popUpTo(SetariRoutes.Login.route) { inclusive = true }
                     }
@@ -227,7 +222,9 @@ fun SetariScreen(onNavigateToGlobalDetail: (Long) -> Unit,
             AnuntPropriuDetaliiScreen(
                 anuntId = id,
                 onBack = { setariNavController.popBackStack() },
-                onDelete = {setariNavController.navigate(SetariRoutes.AnunturileMele.route)}
+                onDelete = {setariNavController.navigate(SetariRoutes.AnunturileMele.route){
+                    popUpTo(SetariRoutes.AnunturileMele.route) { inclusive = true }
+                } }
             )
         }
 
@@ -391,11 +388,10 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done // Schimbă Enter în "Gata/Bifat"
+                imeAction = ImeAction.Done
             ),
             keyboardActions = KeyboardActions(
                 onDone = {
-                    // Aici poți ascunde tastatura sau declanșa direct logarea
                     defaultKeyboardAction(ImeAction.Done)
                 }
             )
@@ -411,7 +407,7 @@ fun LoginScreen(
                         if (response.isSuccessful) {
                             response.body()?.token?.let { token ->
                                 tokenManager.saveToken(token)
-                                onLoginSuccess() // Navighează înapoi sau către profil
+                                onLoginSuccess()
                             }
                         } else {
                             errorMessage = "Eroare: Username sau parolă incorectă"
@@ -443,7 +439,6 @@ fun LoginScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
-    // Stări pentru câmpurile de input
     var nume by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -486,7 +481,6 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Câmp Nume Complet
             OutlinedTextField(
                 value = nume,
                 onValueChange = { newValue ->
@@ -503,7 +497,6 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Câmp Email
             OutlinedTextField(
                 value = email,
                 onValueChange = { newValue ->
@@ -520,7 +513,6 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Câmp Telefon
             OutlinedTextField(
                 value = telefon,
                 onValueChange = { newValue ->
@@ -537,7 +529,6 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Câmp Parolă
             OutlinedTextField(
                 value = parola,
                 onValueChange = { newValue ->
@@ -554,7 +545,6 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Confirmare Parolă
             OutlinedTextField(
                 value = confirmaParola,
                 onValueChange = { confirmaParola = it
@@ -579,11 +569,9 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-            // Buton Înregistrare
             Button(
                 onClick = {
                     scope.launch {
-                        // 1. Definim DTO-ul clar înainte
                         val dto = AuthApiService.CreareUtilizatorDTO(
                             nume = nume,
                             username = email,
@@ -594,7 +582,6 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                         )
 
                         try {
-                            // 2. Apelăm API-ul (compilatorul va știi acum că rezultatul este Response<AuthResponse>)
                             val response = RetrofitClient.authService.register(dto)
 
                             if (response.isSuccessful) {
@@ -602,10 +589,9 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                                 body?.token?.let { token ->
                                     tokenManager.saveToken(token)
                                     Toast.makeText(context, "Bine ai venit, $nume!", Toast.LENGTH_LONG).show()
-                                    onRegisterSuccess() // Folosește callback-ul tău de succes
+                                    onRegisterSuccess()
                                 }
                             } else {
-                                // Gestionare eroare (ex: email luat)
                                 if (response.code() == 409 || response.code() == 400) {
                                     errorMessage = "Acest email este deja asociat unui cont."
                                 } else {
@@ -613,7 +599,6 @@ fun RegisterScreen(onBack: () -> Unit, onRegisterSuccess: () -> Unit) {
                                 }
                             }
                         } catch (e: Exception) {
-                            // Gestionare eroare (ex: Toast sau stare de eroare)
                             e.printStackTrace()
                         }
                     }
@@ -654,7 +639,6 @@ fun AnunturileMeleScreen(
 
     Scaffold() { padding ->
         if (isLoading) {
-            // Indicator încărcare
         } else if (anunturi.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Nu ai postat niciun anunț încă.")
@@ -726,7 +710,6 @@ fun AnuntPropriuItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 🖼️ Imagine Mică (Thumbnail)
             Surface(
                 modifier = Modifier.size(70.dp),
                 shape = MaterialTheme.shapes.medium,
@@ -746,7 +729,6 @@ fun AnuntPropriuItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // 📝 Detalii Text
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${anunt.categorie.display} - ${anunt.titlu}",
@@ -764,7 +746,6 @@ fun AnuntPropriuItem(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Tag pentru Status (Activ/Inactiv)
                 val statusColor = if (anunt.stare == Stare.ACTIV) Color(0xFF4CAF50) else Color.Gray
                 //val statusText = if (anunt.stare == Stare.ACTIV) "Activ" else "Inactiv"
                 val statusText = when(anunt.stare){
@@ -842,7 +823,6 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
             val data = RetrofitClient.anuntService.getAnuntDetails(anuntId)
             anunt = data
             localitateState = RetrofitClient.localitateService.getLocalitateDetails(anunt?.locatieId)
-            // Inițializăm câmpurile de editare cu datele primite
             editTitlu = data.titlu
             editDescriere = data.descriere
             editSpecie = data.specie
@@ -856,7 +836,6 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
         } catch (e: Exception) { e.printStackTrace() }
 
         try {
-            // Încarcă speciile și rasele de la backend
             val response = RetrofitClient.animaluteService.getRase()
             raseMap = response
         } catch (e: Exception) { e.printStackTrace() }
@@ -1072,7 +1051,6 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
 
                 if (isEditing) {
 
-                    // Câmpuri de editare
                     OutlinedTextField(
                         value = editTitlu,
                         onValueChange = { editTitlu = it },
@@ -1112,7 +1090,6 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
                             onExpandedChange = { expandedSpecie = it }
                         )
 
-                        // 2. Dropdown RASĂ (depinde de Specie)
                         EditDropdown(
                             label = "Rasă",
                             selectedValue = editRasa,
@@ -1134,7 +1111,6 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
                             onExpandedChange = { expandedGen = it }
                         )
 
-                        // 4. Dropdown VÂRSTĂ (Enum)
                         EditDropdown(
                             label = "Vârstă",
                             selectedValue = editVarsta?.display ?: "",
@@ -1186,28 +1162,25 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
                             )
                         }
                     }
-
-
-
-
                 } else {
-                    // Vizualizare normală (Reutilizăm stilul tău)
-                    Text(anunt?.titlu ?: "", fontSize = 26.sp, fontWeight = FontWeight.W400)
-                    HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                    Text(anunt?.descriere ?: "", fontSize = 18.sp)
-                    if(anunt?.categorie != Categorie.PROBLEMA){
-                        Spacer(Modifier.height(16.dp))
-                        Text("Specie: ${anunt?.specie}", style = MaterialTheme.typography.bodyLarge)
-                        Text("Rasă: ${anunt?.rasa}", style = MaterialTheme.typography.bodyLarge)
-                        Text("Gen: ${anunt?.gen?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
-                        Text("Varsta: ${anunt?.varsta?.display}", style = MaterialTheme.typography.bodyLarge)
-                    }
-                    Text("Stare: ${anunt?.stare?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
-                    if(anunt?.categorie == Categorie.ADOPTIE) {
-                        Text(
-                            text = "Locatie: ${editLocalitate}, ${editJudet}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                    if(anunt != null){
+                        Text(anunt?.titlu ?: "", fontSize = 26.sp, fontWeight = FontWeight.W400)
+                        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                        Text(anunt?.descriere ?: "", fontSize = 18.sp)
+                        if(anunt?.categorie != Categorie.PROBLEMA){
+                            Spacer(Modifier.height(16.dp))
+                            Text("Specie: ${anunt?.specie}", style = MaterialTheme.typography.bodyLarge)
+                            Text("Rasă: ${anunt?.rasa}", style = MaterialTheme.typography.bodyLarge)
+                            Text("Gen: ${anunt?.gen?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
+                            Text("Varsta: ${anunt?.varsta?.display}", style = MaterialTheme.typography.bodyLarge)
+                        }
+                        Text("Stare: ${anunt?.stare?.name?.lowercase()?.capitalize()}", style = MaterialTheme.typography.bodyLarge)
+                        if(anunt?.categorie == Categorie.ADOPTIE) {
+                            Text(
+                                text = "Locatie: ${editLocalitate}, ${editJudet}",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
                     }
                 }
 
@@ -1218,7 +1191,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.White)
-                    .clickable(enabled = false) { }, // Blocăm click-urile
+                    .clickable(enabled = false) { },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1239,7 +1212,7 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
                     Button(
                         onClick = {
                             showBackupWarning = false
-                            executaSalvareaAnuntului() // Utilizatorul a confirmat, pornim salvarea
+                            executaSalvareaAnuntului()
                         }
                     ) {
                         Text("Am înțeles, salvează")

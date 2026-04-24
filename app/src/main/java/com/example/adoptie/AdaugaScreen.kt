@@ -133,7 +133,6 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
     }
 
     if (isCheckingAuth || !isLoggedIn) {
-        // Un ecran gol sau un loader până când se face redirecționarea
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
@@ -143,7 +142,6 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
     LaunchedEffect(Unit) {
         listaJudete = RetrofitClient.localitateService.getJudete()
         try {
-            // Încarcă speciile și rasele de la backend
             val response = RetrofitClient.animaluteService.getRase()
             raseMap = response
         } catch (e: Exception) { e.printStackTrace() }
@@ -173,7 +171,7 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Secțiune Selectare Imagini
+            // Sectiune Selectare Imagini
             Button(
                 onClick = { photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 modifier = Modifier.fillMaxWidth()
@@ -296,7 +294,7 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     onExpandedChange = { expandedGen = it }
                 )
 
-                // 4. Dropdown VÂRSTĂ (Enum)
+                // 4. Dropdown varsta (Enum)
                 EditDropdown(
                     label = "Vârstă",
                     selectedValue = varsta.display,
@@ -352,7 +350,6 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                         isSubmitting = true
                         try {
 
-                            // 1. Pregătim DTO-ul conform specificațiilor backend
                             val dto = CreareAnuntDTO(
                                 titlu = titlu,
                                 descriere = descriere,
@@ -369,7 +366,6 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                             val dtoJson = Gson().toJson(dto)
                             val dtoPart = dtoJson.toRequestBody("application/json".toMediaTypeOrNull())
 
-                            // 2. Pregătim imaginile
                             val imaginiParts = imaginiUris.map { uri ->
                                 val file = context.createTempFileFromUri(uri)
                                 val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
@@ -397,7 +393,7 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
 
             if (showSuccessDialog) {
                 AlertDialog(
-                    onDismissRequest = { /* Nu permitem închiderea prin click afară pentru a asigura fluxul */ },
+                    onDismissRequest = { /**/ },
                     text = { Text("Anunțul a fost inregistrat cu succes!") },
 
                     confirmButton = {

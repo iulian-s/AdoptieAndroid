@@ -40,8 +40,8 @@ interface AnunturiApiService {
     @Multipart
     @POST("api/anunturi")
     suspend fun creareAnunt(
-        @Part("anunt") dto: RequestBody, // JSON-ul trimis ca RequestBody
-        @Part imagini: List<MultipartBody.Part> // Lista de fișiere
+        @Part("anunt") dto: RequestBody,
+        @Part imagini: List<MultipartBody.Part>
     ): Response<AnuntDTO>
 
     @DELETE("api/anunturi/{id}")
