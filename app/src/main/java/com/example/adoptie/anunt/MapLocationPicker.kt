@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,12 +41,22 @@ import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun MapPickerDialog(
+    initialLocation: LatLng? = null,
     onDismiss: () -> Unit,
     onLocationConfirm: (LatLng) -> Unit
 ) {
     var tempLocation by remember { mutableStateOf<LatLng?>(null) }
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(44.4268, 26.1025), 10f)
+        position = CameraPosition.fromLatLngZoom(
+            initialLocation ?: LatLng(44.4268, 26.1025),
+            if (initialLocation != null) 13f else 10f
+        )
+    }
+
+    LaunchedEffect(initialLocation) {
+        initialLocation?.let {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(it, 13f)
+        }
     }
 
     Dialog(

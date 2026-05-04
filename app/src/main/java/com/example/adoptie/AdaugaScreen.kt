@@ -204,38 +204,7 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                 expanded = expandedCategorie,
                 onExpandedChange = { expandedCategorie = it }
             )
-            if (categorieSelected != Categorie.ADOPTIE) {
-                Text("Locație Eveniment", style = MaterialTheme.typography.titleMedium)
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .clickable { showMapDialog = true },
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        if (selectedLocation == null) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.LocationOn, contentDescription = null)
-                                Text("Apasă pentru a alege locația pe hartă")
-                            }
-                        } else {
-                            Text("Locatia a fost inregistrata, apasa pentru a modifica!", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-            }
-
-            if (showMapDialog) {
-                MapPickerDialog(
-                    onDismiss = { showMapDialog = false },
-                    onLocationConfirm = {
-                        selectedLocation = it
-                        showMapDialog = false
-                    }
-                )
-            }
             Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
@@ -305,39 +274,82 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     onExpandedChange = { expandedVarsta = it }
                 )
             }
-            //6. Dropdown Judet
-            if(categorieSelected == Categorie.ADOPTIE){
+        //6. Dropdown Judet
+
+            EditDropdown(
+                label = "Judet",
+                selectedValue = judet ?: "",
+                options = listaJudete,
+                optionToString = { it },
+                onValueChange = {
+                    judet = it
+                    localitate = ""
+                },
+                expanded = expandedJudet,
+                onExpandedChange = { expandedJudet = it }
+            )
+            //7. Dropdown Localitate
+            if(judet != null) {
                 EditDropdown(
-                    label = "Judet",
-                    selectedValue = judet ?: "",
-                    options = listaJudete,
-                    optionToString = { it },
+                    label = "Localitate",
+                    selectedValue = localitate ?: "",
+                    options = listaOraseByJudet,
+                    optionToString = { it.nume },
                     onValueChange = {
-                        judet = it
-                        localitate = ""
+                        localitate = it.nume
+                        locatieId = it.id
                     },
-                    expanded = expandedJudet,
-                    onExpandedChange = { expandedJudet = it }
+                    expanded = expandedLocalitate,
+                    onExpandedChange = { expandedLocalitate = it }
                 )
-                //6. Dropdown Localitate
-                if(judet != null) {
-                    EditDropdown(
-                        label = "Localitate",
-                        selectedValue = localitate ?: "",
-                        options = listaOraseByJudet,
-                        optionToString = { it.nume },
-                        onValueChange = {
-                            localitate = it.nume
-                            locatieId = it.id
-                        },
-                        expanded = expandedLocalitate,
-                        onExpandedChange = { expandedLocalitate = it }
-                    )
-                }
             }
 
 
+
             Spacer(Modifier.height(24.dp))
+
+            if (categorieSelected != Categorie.ADOPTIE) {
+                Text("Locatie precisa", style = MaterialTheme.typography.titleMedium)
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .clickable { showMapDialog = true },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        if (selectedLocation == null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Default.LocationOn, contentDescription = null)
+                                Text("Apasă pentru a alege locația pe hartă")
+                            }
+                        } else {
+                            Text("Locatia a fost inregistrata, apasa pentru a modifica!", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+
+            if (showMapDialog) {
+                val selectedLocalitateObj = listaOraseByJudet.find { it.nume == localitate }
+                val initialLatLng = if (selectedLocalitateObj != null) {
+                    LatLng(selectedLocalitateObj.lat, selectedLocalitateObj.lng)
+                } else {
+                    null
+                }
+
+                MapPickerDialog(
+                    initialLocation = initialLatLng,
+                    onDismiss = { showMapDialog = false },
+                    onLocationConfirm = {
+                        selectedLocation = it
+                        showMapDialog = false
+                    }
+                )
+            }
+            Spacer(Modifier.height(24.dp))
+
 
             Button(
                 onClick = {
