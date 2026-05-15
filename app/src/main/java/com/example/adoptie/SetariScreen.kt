@@ -97,6 +97,8 @@ import com.example.adoptie.anunt.Varsta
 import com.example.adoptie.auth.AuthApiService
 import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.localitate.LocalitateDTO
+import com.example.adoptie.ui.components.ScreenHeader
+import com.example.adoptie.ui.components.SettingsMenuCard
 import com.example.adoptie.utilizator.ForgotPasswordScreen
 import com.example.adoptie.utilizator.ProfilulMeuScreen
 import com.example.adoptie.utilizator.RecoverPasswordScreen
@@ -257,50 +259,41 @@ fun SetariMainContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-
-
         if (isLoggedIn) {
-            Text(
-                text = "Profil",
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(bottom = 32.dp)
+            ScreenHeader(
+                title = "Contul meu",
+                subtitle = "Gestionează profilul și anunțurile tale"
             )
-            // UI pentru utilizator LOGAT
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                onClick = onNavigateToProfil
-            ) {
-                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Person, contentDescription = null)
-                    Spacer(Modifier.width(16.dp))
-                    Text("Profilul meu", style = MaterialTheme.typography.titleMedium)
-                }
-            }
 
-            Card(
-                onClick = onNavigateToAnunturi,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.List, contentDescription = null)
-                    Spacer(Modifier.width(16.dp))
-                    Text("Anunțurile mele", style = MaterialTheme.typography.titleMedium)
-                }
-            }
+            SettingsMenuCard(
+                title = "Profilul meu",
+                subtitle = "Date personale și contact",
+                icon = Icons.Default.Person,
+                onClick = onNavigateToProfil,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            SettingsMenuCard(
+                title = "Anunțurile mele",
+                subtitle = "Vizualizează și editează postările",
+                icon = Icons.Default.List,
+                onClick = onNavigateToAnunturi
+            )
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Button(
+            OutlinedButton(
                 onClick = onLogout,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
             ) {
                 Text("Deconectare")
             }
@@ -341,19 +334,24 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(24.dp)) {
-//        IconButton(onClick = onBack) {
-//            Icon(Icons.Default.ArrowBack, contentDescription = "Înapoi")
-//        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp)
+    ) {
+        ScreenHeader(
+            title = "Bine ai venit!",
+            subtitle = "Conectează-te pentru a posta anunțuri și a contacta alți utilizatori"
+        )
 
         if (errorMessage != null) {
-            Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+            Text(
+                errorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
         }
-
-        Text("Bine ai venit!", style = MaterialTheme.typography.headlineLarge)
-        Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
             value = username,
@@ -410,7 +408,7 @@ fun LoginScreen(
                                 onLoginSuccess()
                             }
                         } else {
-                            errorMessage = "Eroare: Username sau parolă incorectă"
+                            errorMessage = "Email sau parolă incorectă"
                         }
                     } catch (e: Exception) {
                         errorMessage = "Eroare de conexiune la server"
@@ -424,13 +422,15 @@ fun LoginScreen(
             Text("Conectare")
         }
 
-        Row {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             TextButton(onClick = onNavigateToRegister) {
-                Text("Nu ai cont? Inregistreaza-te")
+                Text("Înregistrare")
             }
-
             TextButton(onClick = onNavigateToForgotPassword) {
-                Text("Ai uitat parola?")
+                Text("Parolă uitată?")
             }
         }
     }

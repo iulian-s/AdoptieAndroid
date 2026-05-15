@@ -17,11 +17,10 @@ import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.adoptie.anunt.AnunturiRoutes
 import com.example.adoptie.anunt.ExploreazaScreen
@@ -59,30 +59,19 @@ class MainActivity : ComponentActivity() {
             AdoptieTheme {
                 val items = listOf(
                     NavigationItem(
-                        "Exploreaza",
+                        "Explorează",
                         Icons.Filled.Home,
-                        Icons.Outlined.Home,
-                        hasNews = false
+                        Icons.Outlined.Home
                     ),
                     NavigationItem(
-                        "Adauga",
+                        "Adaugă",
                         Icons.Filled.AddCircle,
-                        Icons.Outlined.AddCircle,
-                        hasNews = false
+                        Icons.Outlined.AddCircle
                     ),
-//                    NavigationItem(
-//                        "Chat",
-//                        Icons.Filled.Email,
-//                        Icons.Outlined.Email,
-//                        hasNews = false,
-//                        badgeCount = 12
-//                    ),
-
                     NavigationItem(
                         "Profil",
                         Icons.Filled.Person,
-                        Icons.Outlined.Person,
-                        hasNews = true
+                        Icons.Outlined.Person
                     )
                 )
                 var selectedItemIndex by rememberSaveable {
@@ -101,49 +90,39 @@ class MainActivity : ComponentActivity() {
 
 
                 Scaffold(
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
                     bottomBar = {
-                        NavigationBar {
+                        NavigationBar(
+                            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                            tonalElevation = 8.dp
+                        ) {
                             items.forEachIndexed { index, item ->
+                                val selected = selectedItemIndex == index
                                 NavigationBarItem(
-                                    selected = selectedItemIndex == index,
+                                    selected = selected,
                                     onClick = {
                                         if (index == 0 && selectedItemIndex == 0) {
-                                            anunturiNavController?.let {
-                                                resetAnunturiStack(it)
-                                            }
+                                            anunturiNavController?.let { resetAnunturiStack(it) }
                                         }
-                                        if (index == 3 && selectedItemIndex == 3) {
-                                            profileNavController?.let {
-                                                resetProfileStack(it)
-                                            }
+                                        if (index == 2 && selectedItemIndex == 2) {
+                                            profileNavController?.let { resetProfileStack(it) }
                                         }
                                         selectedItemIndex = index
                                     },
-                                    label = {
-                                        Text(item.title)
-                                    },
+                                    label = { Text(item.title) },
                                     icon = {
-                                        BadgedBox(badge = {
-                                            if (item.badgeCount != null) {
-                                                Badge {
-                                                    Text(item.badgeCount.toString())
-                                                }
-                                            } else if (item.hasNews) {
-                                                Badge()
-                                            }
-
-                                        }) {
-                                            Icon(
-                                                imageVector = if (index == selectedItemIndex) {
-                                                    item.selectedIcon
-                                                } else {
-                                                    item.selectedIcon
-                                                },
-                                                item.title
-                                            )
-                                        }
-
-                                    }
+                                        Icon(
+                                            imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                                            contentDescription = item.title
+                                        )
+                                    },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                                        indicatorColor = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer,
+                                        unselectedIconColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 )
                             }
                         }

@@ -6,6 +6,5 @@ data class NavigationItem(
     val title: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
-    val hasNews: Boolean,
     val badgeCount: Int? = null
 )

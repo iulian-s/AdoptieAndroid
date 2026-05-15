@@ -5,23 +5,28 @@ package com.example.adoptie.anunt
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import com.example.adoptie.ui.components.CategoryChip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,12 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.adoptie.RetrofitClient
 import com.example.adoptie.localitate.LocalitateDTO
 import com.example.adoptie.utilizator.UtilizatorDTO
@@ -63,6 +64,20 @@ fun DetaliiAnuntScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = { Text("Detalii anunț") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Înapoi")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        }
     ) { innerPadding ->
             when(val state = detaliiState){
                 is DetaliiState.Loading -> Box(Modifier
@@ -103,58 +118,51 @@ fun DetaliiContent(
     else
         localitate?.diacritice ?: ""
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.align(Alignment.TopStart)
-        ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = null)
-        }
-
-        Text(
-            text = "Detalii Anunt",
-            modifier = Modifier.align(Alignment.Center),
-            style = MaterialTheme.typography.titleLarge
-        )
-    }
     LazyColumn(
-        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)
+        modifier = modifier.fillMaxSize().padding(horizontal = 20.dp)
     ) {
-        item{
+        item {
             ImageCarousel(imageUrls = anunt.listaImagini)
             Spacer(Modifier.height(16.dp))
 
-            Text(anunt.titlu, fontFamily = FontFamily.SansSerif, fontSize = 26.sp, fontWeight = FontWeight.W400)
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                thickness = 1.dp,
-                color = Color.Gray
+            CategoryChip(categorie = anunt.categorie)
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                text = anunt.titlu,
+                style = MaterialTheme.typography.headlineMedium
             )
-            Text(anunt.descriere,fontFamily = FontFamily.SansSerif, fontSize = 18.sp, fontWeight = FontWeight.Normal )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = anunt.descriere,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(16.dp))
         }
         item {
-//            if (anunt.categorie != Categorie.ADOPTIE) {
-//                Text(
-//                    text = "Categorie: ${anunt.categorie.display}",
-//                    style = MaterialTheme.typography.bodyLarge,
-//                )
-//            }
             if (anunt.categorie != Categorie.PROBLEMA) {
-                Text("Specie: ${anunt.specie}", style = MaterialTheme.typography.bodyLarge)
-                Text("Rasă: ${anunt.rasa}", style = MaterialTheme.typography.bodyLarge)
-                Text("Gen: ${anunt.gen.name.lowercase()}", style = MaterialTheme.typography.bodyLarge)
-                Text("Vârstă: ${anunt.varsta.display}", style = MaterialTheme.typography.bodyLarge)
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DetailRow("Specie", anunt.specie)
+                        DetailRow("Rasă", anunt.rasa)
+                        DetailRow("Gen", anunt.gen.name.lowercase().replaceFirstChar { it.uppercase() })
+                        DetailRow("Vârstă", anunt.varsta.display)
+                    }
+                }
             }
 
-            if(isEditable){
-                Text("Stare: ${anunt.stare}", style = MaterialTheme.typography.bodyLarge)
+            if (isEditable) {
+                Spacer(Modifier.height(8.dp))
+                DetailRow("Stare", anunt.stare.name.lowercase())
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
             Text("Locație", style = MaterialTheme.typography.titleMedium)
             LocatieWidget(
                 latitudine = displayLat,
@@ -184,4 +192,13 @@ fun DetaliiContent(
         }
 
     }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Text(
+        text = "$label: $value",
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = Modifier.padding(vertical = 2.dp)
+    )
 }

@@ -59,6 +59,7 @@ import com.example.adoptie.anunt.MapPickerDialog
 import com.example.adoptie.anunt.Varsta
 import com.example.adoptie.auth.TokenManager
 import com.example.adoptie.localitate.LocalitateDTO
+import com.example.adoptie.ui.components.FormSectionTitle
 import com.example.adoptie.utilizator.createTempFileFromUri
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
@@ -163,15 +164,23 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
     ) { uris -> imaginiUris = uris }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Adaugă Anunț Nou") }) }
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = { Text("Anunț nou") },
+                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 20.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Sectiune Selectare Imagini
+            FormSectionTitle("Fotografii")
             Button(
                 onClick = { photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 modifier = Modifier.fillMaxWidth()
@@ -194,7 +203,8 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
+            FormSectionTitle("Detalii anunț")
             EditDropdown(
                 label = "Categorie",
                 selectedValue = categorieSelected.display,
@@ -226,9 +236,8 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
 
             Spacer(Modifier.height(16.dp))
 
-            if(categorieSelected != Categorie.PROBLEMA)
-            {
-                // 1. Dropdown SPECIE
+            if (categorieSelected != Categorie.PROBLEMA) {
+                FormSectionTitle("Despre animal")
                 EditDropdown(
                     label = "Specie",
                     selectedValue = specie,
@@ -274,10 +283,9 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     onExpandedChange = { expandedVarsta = it }
                 )
             }
-        //6. Dropdown Judet
-
+            FormSectionTitle("Locație")
             EditDropdown(
-                label = "Judet",
+                label = "Județ",
                 selectedValue = judet ?: "",
                 options = listaJudete,
                 optionToString = { it },
@@ -309,8 +317,6 @@ fun AdaugaScreen(onSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
             Spacer(Modifier.height(24.dp))
 
             if (categorieSelected != Categorie.ADOPTIE) {
-                Text("Locatie precisa", style = MaterialTheme.typography.titleMedium)
-
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
