@@ -639,6 +639,9 @@ fun AnunturileMeleScreen(
 
     Scaffold() { padding ->
         if (isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
         } else if (anunturi.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Nu ai postat niciun anunț încă.")
@@ -919,7 +922,11 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
     }
 
     Scaffold(){ padding ->
-        if (isLoading) { /* CircularProgressIndicator */ }
+        if (isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
         else {
             Box(
                 modifier = Modifier
@@ -1190,14 +1197,14 @@ fun AnuntPropriuDetaliiScreen(anuntId: Long, onBack: () -> Unit, onDelete: () ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
                     .clickable(enabled = false) { },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Se actualizeaza informatiile...", color = Color.Black)
+                    Text("Se actualizeaza informatiile...", color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
