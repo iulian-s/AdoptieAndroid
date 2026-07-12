@@ -226,7 +226,8 @@ fun ProfilulMeuScreen(
                                 label = { Text("Parola actuală") },
                                 modifier = Modifier.fillMaxWidth(),
                                 visualTransformation = PasswordVisualTransformation(), // Ascunde caracterele
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                                //keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                                singleLine = true
                             )
 
                             Spacer(Modifier.height(8.dp))
@@ -237,7 +238,8 @@ fun ProfilulMeuScreen(
                                 label = { Text("Parola nouă") },
                                 modifier = Modifier.fillMaxWidth(),
                                 visualTransformation = PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                                //keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                                singleLine = true
                             )
                         }
                     } else {
